@@ -1,22 +1,42 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { signIn } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { HiLockClosed, HiMail, HiEye, HiEyeOff } from 'react-icons/hi';
+import { HiLockClosed, HiMail, HiEye, HiEyeOff, HiExclamationCircle } from 'react-icons/hi';
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [configError, setConfigError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Check for NextAuth error in URL parameters
+  useEffect(() => {
+    const urlError = searchParams.get('error');
+    if (urlError) {
+      // Clear the error from URL without reload
+      window.history.replaceState({}, '', '/admin/login');
+      
+      if (urlError === 'Configuration') {
+        setConfigError('Erreur de configuration du serveur. Veuillez vérifier que les variables d\'environnement NEXTAUTH_SECRET, NEXTAUTH_URL et MONGODB_URI sont correctement configurées sur Vercel.');
+      } else if (urlError === 'CredentialsSignin') {
+        setError('Email ou mot de passe incorrect');
+      } else {
+        setError('Une erreur est survenue lors de la connexion');
+      }
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setConfigError('');
     setLoading(true);
 
     try {
@@ -55,6 +75,23 @@ export default function AdminLoginPage() {
             <h1 className="text-2xl font-bold text-white">Admin Panel</h1>
             <p className="text-gray-400 mt-2">Connectez-vous pour gérer votre portfolio</p>
           </div>
+
+          {/* Configuration Error */}
+          {configError && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4 mb-6"
+            >
+              <div className="flex items-start gap-3">
+                <HiExclamationCircle className="w-6 h-6 text-yellow-500 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-yellow-500 text-sm font-medium mb-2">Erreur de configuration</p>
+                  <p className="text-yellow-400/80 text-xs">{configError}</p>
+                </div>
+              </div>
+            </motion.div>
+          )}
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
