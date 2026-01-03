@@ -68,8 +68,8 @@ NEXTAUTH_URL=https://votre-domaine.vercel.app
 NEXTAUTH_SECRET=votre-secret-genere-avec-openssl-rand-base64-32
 
 # Identifiants admin
-ADMIN_EMAIL=admin@loicmazagran.com
-ADMIN_PASSWORD=votre-mot-de-passe-securise
+ADMIN_EMAIL=loicmazagran2007@gmail.com
+ADMIN_PASSWORD=jf5z243LuwKvt
 
 # Cloudinary (upload d'images)
 CLOUDINARY_CLOUD_NAME=votre-cloud-name
