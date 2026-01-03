@@ -8,6 +8,50 @@ if (!process.env.NEXTAUTH_SECRET && process.env.NODE_ENV === 'production') {
   console.error('NEXTAUTH_SECRET is not set. Authentication will not work properly.');
 }
 
+/**
+ * Ensures the admin user exists in the database with the correct credentials
+ * from environment variables. This is called during authentication to
+ * automatically sync the admin user with environment variable settings.
+ */
+async function ensureAdminUser(): Promise<void> {
+  const adminEmail = process.env.ADMIN_EMAIL;
+  const adminPassword = process.env.ADMIN_PASSWORD;
+
+  // If admin credentials are not configured in environment variables, skip
+  if (!adminEmail || !adminPassword) {
+    return;
+  }
+
+  try {
+    // Check if admin user exists
+    const existingAdmin = await User.findOne({ email: adminEmail }).select('+password');
+    
+    if (!existingAdmin) {
+      // Create new admin user with credentials from environment variables
+      await User.create({
+        email: adminEmail,
+        password: adminPassword,
+        name: 'Loic Mazagran',
+        role: 'admin',
+      });
+      console.log('Admin user created from environment variables');
+    } else {
+      // Check if password needs to be updated by verifying against env password
+      const passwordMatches = await existingAdmin.comparePassword(adminPassword);
+      
+      if (!passwordMatches) {
+        // Update the password to match environment variable
+        existingAdmin.password = adminPassword;
+        await existingAdmin.save();
+        console.log('Admin user password updated from environment variables');
+      }
+    }
+  } catch (error) {
+    console.error('Error ensuring admin user:', error);
+    // Don't throw - allow authentication to continue with existing database state
+  }
+}
+
 export const authOptions: AuthOptions = {
   providers: [
     CredentialsProvider({
@@ -23,6 +67,9 @@ export const authOptions: AuthOptions = {
 
         try {
           await dbConnect();
+
+          // Ensure admin user exists and is synced with environment variables
+          await ensureAdminUser();
 
           const user = await User.findOne({ email: credentials.email }).select('+password');
 
