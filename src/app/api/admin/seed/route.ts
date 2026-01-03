@@ -30,7 +30,9 @@ export async function POST(request: NextRequest) {
     const adminPassword = process.env.ADMIN_PASSWORD || 'changeme123';
     const adminName = process.env.ADMIN_NAME || 'Admin';
 
-    console.log('[SEED] Admin credentials:', { email: adminEmail, name: adminName });
+    // Mask email for security in logs
+    const maskedEmail = adminEmail.charAt(0) + '***@' + adminEmail.split('@')[1];
+    console.log('[SEED] Admin credentials:', { email: maskedEmail, name: adminName });
 
     // Validate password meets minimum requirements (8 characters as per User model)
     if (adminPassword.length < 8) {
@@ -152,7 +154,10 @@ export async function POST(request: NextRequest) {
     console.error('[SEED] Error seeding database:', error);
     if (error instanceof Error) {
       console.error('[SEED] Error message:', error.message);
-      console.error('[SEED] Error stack:', error.stack);
+      // Only log stack trace in development
+      if (process.env.NODE_ENV === 'development') {
+        console.error('[SEED] Error stack:', error.stack);
+      }
     }
     return NextResponse.json({ 
       error: 'Seed failed',

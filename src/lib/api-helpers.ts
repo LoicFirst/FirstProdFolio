@@ -45,7 +45,11 @@ export function handleApiError(error: unknown, context: string): NextResponse {
   
   if (error instanceof Error) {
     console.error(`[API] Error message:`, error.message);
-    console.error(`[API] Error stack:`, error.stack);
+    
+    // Only log stack traces in development
+    if (process.env.NODE_ENV === 'development' && error.stack) {
+      console.error(`[API] Error stack:`, error.stack);
+    }
     
     // Check for specific error types
     if (error.message.includes('Cast to ObjectId failed')) {

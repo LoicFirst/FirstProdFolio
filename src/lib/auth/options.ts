@@ -60,7 +60,9 @@ async function ensureAdminUser(): Promise<void> {
     return;
   }
 
-  console.log('[AUTH] Admin credentials validated. Email:', adminEmail);
+  // Mask email for security in logs (show first char and domain)
+  const maskedEmail = adminEmail.charAt(0) + '***@' + adminEmail.split('@')[1];
+  console.log('[AUTH] Admin credentials validated. Email:', maskedEmail);
 
   try {
     // Check if any admin user exists (search by role to stay consistent with seed endpoint)
@@ -104,10 +106,14 @@ async function ensureAdminUser(): Promise<void> {
     console.error('[AUTH] ERROR: Failed to ensure admin user:', error);
     if (error instanceof Error) {
       console.error('[AUTH] Error message:', error.message);
-      console.error('[AUTH] Error stack:', error.stack);
+      // Only log stack trace in development
+      if (process.env.NODE_ENV === 'development') {
+        console.error('[AUTH] Error stack:', error.stack);
+      }
     }
     // Don't set adminUserEnsured to true on error - allow retry on next attempt
-    throw error; // Re-throw to let the caller know about the failure
+    // Don't re-throw to prevent auth failures from crashing the app
+    // The authorize function will still work with existing users
   }
 }
 
@@ -127,7 +133,8 @@ export const authOptions: AuthOptions = {
           throw new Error('Email and password are required');
         }
 
-        console.log('[AUTH] Credentials provided. Email:', credentials.email);
+        const maskedEmail = credentials.email.charAt(0) + '***@' + credentials.email.split('@')[1];
+        console.log('[AUTH] Credentials provided. Email:', maskedEmail);
 
         try {
           console.log('[AUTH] Attempting database connection...');
@@ -139,11 +146,11 @@ export const authOptions: AuthOptions = {
           await ensureAdminUser();
           console.log('[AUTH] ✓ Admin user check complete');
 
-          console.log('[AUTH] Looking up user by email:', credentials.email);
+          console.log('[AUTH] Looking up user by email');
           const user = await User.findOne({ email: credentials.email }).select('+password');
 
           if (!user) {
-            console.error('[AUTH] User not found with email:', credentials.email);
+            console.error('[AUTH] User not found');
             throw new Error('Invalid credentials');
           }
 
@@ -151,12 +158,12 @@ export const authOptions: AuthOptions = {
           const isMatch = await user.comparePassword(credentials.password);
 
           if (!isMatch) {
-            console.error('[AUTH] Password verification failed for user:', credentials.email);
+            console.error('[AUTH] Password verification failed');
             throw new Error('Invalid credentials');
           }
 
           console.log('[AUTH] ✓ Password verified successfully');
-          console.log('[AUTH] ✓ Authentication successful for user:', user.email);
+          console.log('[AUTH] ✓ Authentication successful');
 
           return {
             id: user._id.toString(),
@@ -168,7 +175,10 @@ export const authOptions: AuthOptions = {
           console.error('[AUTH] Authentication error occurred:', error);
           if (error instanceof Error) {
             console.error('[AUTH] Error message:', error.message);
-            console.error('[AUTH] Error stack:', error.stack);
+            // Only log stack trace in development
+            if (process.env.NODE_ENV === 'development') {
+              console.error('[AUTH] Error stack:', error.stack);
+            }
           }
           throw error;
         }
@@ -182,7 +192,9 @@ export const authOptions: AuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        console.log('[AUTH] JWT callback - creating token for user:', user.email);
+        // Mask email in logs
+        const maskedEmail = user.email?.charAt(0) + '***@' + user.email?.split('@')[1];
+        console.log('[AUTH] JWT callback - creating token for user:', maskedEmail);
         token.id = user.id;
         token.role = (user as { role?: string }).role;
       }
@@ -190,7 +202,9 @@ export const authOptions: AuthOptions = {
     },
     async session({ session, token }) {
       if (session.user) {
-        console.log('[AUTH] Session callback - creating session for user:', session.user.email);
+        // Mask email in logs
+        const maskedEmail = session.user.email?.charAt(0) + '***@' + session.user.email?.split('@')[1];
+        console.log('[AUTH] Session callback - creating session for user:', maskedEmail);
         (session.user as { id?: string }).id = token.id as string;
         (session.user as { role?: string }).role = token.role as string;
       }
@@ -202,5 +216,6 @@ export const authOptions: AuthOptions = {
     error: '/admin/login',
   },
   secret: process.env.NEXTAUTH_SECRET,
-  debug: process.env.NODE_ENV === 'development', // Enable debug mode in development
+  // Only enable debug mode in development with explicit flag
+  debug: process.env.NODE_ENV === 'development' && process.env.NEXTAUTH_DEBUG === 'true',
 };
