@@ -114,12 +114,52 @@ Si vous avez besoin de mettre à jour les identifiants admin après le déploiem
      -d '{"secret": "votre-nextauth-secret", "forceUpdate": true}'
    ```
 
-### Résolution de l'erreur "Configuration"
+### Résolution des problèmes de connexion
+
+#### Erreur "Configuration"
 
 Si vous voyez l'erreur `?error=Configuration` sur la page de connexion, vérifiez que :
 1. La variable `NEXTAUTH_SECRET` est correctement définie sur Vercel
 2. La variable `NEXTAUTH_URL` correspond à votre URL de production (ex: `https://first-prod-folio.vercel.app`)
 3. La variable `MONGODB_URI` est correctement configurée et accessible
+
+#### Erreur "Email ou mot de passe incorrect"
+
+Si vous ne pouvez pas vous connecter avec les bons identifiants :
+1. **Vérifier les variables d'environnement** : Assurez-vous que `ADMIN_EMAIL` et `ADMIN_PASSWORD` sont correctement configurées
+2. **Mot de passe minimum** : Le mot de passe doit contenir au moins 8 caractères
+3. **Consulter les logs** : Vérifiez les logs de déploiement sur Vercel pour voir les messages détaillés :
+   - `[AUTH]` : Messages d'authentification
+   - `[DB]` : Connexion à la base de données
+   - `[API]` : Opérations API
+
+#### Problèmes de connexion à la base de données
+
+Si vous voyez des erreurs liées à MongoDB :
+1. **Vérifier MONGODB_URI** : La chaîne de connexion doit être valide et accessible
+2. **Timeout de connexion** : Le système utilise un timeout de 10 secondes pour la connexion initiale
+3. **Whitelist IP** : Sur MongoDB Atlas, assurez-vous que l'IP de Vercel est autorisée (ou utilisez `0.0.0.0/0` pour autoriser toutes les IPs)
+
+#### Chargement lent ou timeout
+
+Si la page de connexion prend trop de temps :
+1. **Vérifier la connexion MongoDB** : Une connexion lente à la base de données peut causer des timeouts
+2. **Consulter les logs détaillés** : Les logs montrent maintenant chaque étape de l'authentification
+3. **Temps d'attente** : Le système a un timeout de 10s pour la connexion DB et 45s pour les opérations
+
+#### Debugging avancé
+
+Le système génère maintenant des logs détaillés avec les préfixes suivants :
+- **`[AUTH]`** : Étapes d'authentification et validation des utilisateurs
+- **`[DB]`** : Connexion et opérations de base de données
+- **`[API]`** : Requêtes API et opérations CRUD
+- **`[LOGIN]`** : Actions sur la page de connexion
+- **`[SEED]`** : Initialisation de la base de données
+
+Pour consulter ces logs sur Vercel :
+1. Allez dans votre projet Vercel
+2. Cliquez sur "Logs" dans le menu de gauche
+3. Filtrez par "Runtime Logs" pour voir les logs en temps réel
 
 ## 🛡️ Sécurité
 
@@ -135,6 +175,26 @@ Si vous voyez l'erreur `?error=Configuration` sur la page de connexion, vérifie
 - Protection CSRF intégrée à NextAuth.js
 - Validation des données côté serveur
 - Routes API protégées par authentification
+- Logging détaillé pour le debugging et la surveillance
+- Validation des variables d'environnement au démarrage
+- Gestion robuste des erreurs de connexion
+
+### Système de logging amélioré
+
+Le système inclut maintenant un système de logging détaillé pour faciliter le diagnostic des problèmes :
+
+**Préfixes de logs :**
+- `[AUTH]` - Authentification et gestion des utilisateurs
+- `[DB]` - Connexion et opérations MongoDB
+- `[API]` - Requêtes et réponses API
+- `[LOGIN]` - Actions sur la page de connexion
+- `[SEED]` - Initialisation de la base de données
+
+**Niveaux de logs :**
+- ✓ Symbole pour les opérations réussies
+- `CRITICAL:` pour les erreurs graves nécessitant une attention immédiate
+- `ERROR:` pour les erreurs d'exécution
+- Messages informatifs pour le suivi normal des opérations
 
 ## 📞 Support
 
@@ -142,5 +202,18 @@ En cas de problème ou question, consultez la documentation technique ou contact
 
 ---
 
-**Version** : 1.0.0
+**Version** : 2.0.0  
 **Dernière mise à jour** : Janvier 2026
+
+### Changelog
+
+**v2.0.0 (Janvier 2026)**
+- ✨ Système de logging détaillé pour faciliter le debugging
+- 🔒 Validation des variables d'environnement au démarrage
+- 🐛 Amélioration de la gestion des erreurs de connexion
+- 📊 Timeouts configurés pour MongoDB (10s connexion, 45s opérations)
+- 🔧 Messages d'erreur plus précis et informatifs
+- 📝 Documentation enrichie avec section de troubleshooting
+
+**v1.0.0**
+- Lancement initial du panneau d'administration
