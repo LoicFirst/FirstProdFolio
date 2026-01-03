@@ -26,7 +26,7 @@ if (!global.mongoose) {
  * @param uri The MongoDB connection URI to validate
  * @returns Object with isValid boolean and error message if invalid
  */
-function validateMongoDBUri(uri: string): { isValid: boolean; error?: string } {
+export function validateMongoDBUri(uri: string): { isValid: boolean; error?: string } {
   // Check if URI is empty or just whitespace
   if (!uri || uri.trim().length === 0) {
     return {
@@ -35,8 +35,10 @@ function validateMongoDBUri(uri: string): { isValid: boolean; error?: string } {
     };
   }
 
+  const MONGODB_PROTOCOL_REGEX = /^mongodb(\+srv)?:\/\//;
+
   // Check for basic MongoDB URI format (mongodb:// or mongodb+srv://)
-  if (!uri.startsWith('mongodb://') && !uri.startsWith('mongodb+srv://')) {
+  if (!MONGODB_PROTOCOL_REGEX.test(uri)) {
     return {
       isValid: false,
       error: 'MONGODB_URI must start with "mongodb://" or "mongodb+srv://"'
@@ -44,11 +46,16 @@ function validateMongoDBUri(uri: string): { isValid: boolean; error?: string } {
   }
 
   // Check for presence of credentials pattern (user:password@)
-  const hasCredentials = /@/.test(uri);
+  // More robust check: look for @ and ensure credentials pattern before it
+  const parts = uri.split('@');
+  const hasCredentials = parts.length > 1;
+  
   if (hasCredentials) {
-    // Extract the part before @ to check credentials format
-    const credentialsPart = uri.split('@')[0];
-    const protocolRemoved = credentialsPart.replace(/^mongodb(\+srv)?:\/\//, '');
+    // Extract the part before the last @ to check credentials format
+    // Use lastIndexOf to handle edge cases with multiple @ symbols
+    const lastAtIndex = uri.lastIndexOf('@');
+    const credentialsPart = uri.substring(0, lastAtIndex);
+    const protocolRemoved = credentialsPart.replace(MONGODB_PROTOCOL_REGEX, '');
     
     // Check if credentials contain a colon (separating user and password)
     if (!protocolRemoved.includes(':')) {
@@ -65,21 +72,18 @@ function validateMongoDBUri(uri: string): { isValid: boolean; error?: string } {
         error: 'MONGODB_URI contains placeholder password (e.g., <password>). Replace it with the actual password.'
       };
     }
-  }
-
-  // Check for host presence after credentials
-  const parts = uri.split('@');
-  if (parts.length > 1) {
-    const hostPart = parts[1];
+    
+    // Check for host presence after credentials (everything after the last @)
+    const hostPart = uri.substring(lastAtIndex + 1);
     if (!hostPart || hostPart.trim().length === 0) {
       return {
         isValid: false,
         error: 'MONGODB_URI is missing the host/cluster address after credentials'
       };
     }
-  } else if (!hasCredentials) {
+  } else {
     // No credentials, check if there's a host after the protocol
-    const withoutProtocol = uri.replace(/^mongodb(\+srv)?:\/\//, '');
+    const withoutProtocol = uri.replace(MONGODB_PROTOCOL_REGEX, '');
     if (!withoutProtocol || withoutProtocol.trim().length === 0) {
       return {
         isValid: false,
