@@ -18,6 +18,12 @@ function getInitialErrors(searchParams: URLSearchParams): { error: string; confi
     };
   } else if (urlError === 'CredentialsSignin') {
     return { error: 'Email ou mot de passe incorrect', configError: '' };
+  } else if (urlError.includes('database') || urlError.includes('MongoDB') || urlError.includes('MONGODB_URI')) {
+    // Handle database-specific errors with more details
+    return {
+      error: '',
+      configError: `Erreur de base de données: ${urlError}`,
+    };
   } else {
     return { error: 'Une erreur est survenue lors de la connexion', configError: '' };
   }
@@ -69,13 +75,27 @@ export default function AdminLoginPage() {
       if (result?.error) {
         console.error('[LOGIN] Authentication failed:', result.error);
         
-        // Provide more specific error messages
+        // Provide more specific error messages based on error type
         if (result.error === 'CredentialsSignin' || result.error === 'Invalid credentials') {
           setError('Email ou mot de passe incorrect. Vérifiez vos identifiants et réessayez.');
-        } else if (result.error.includes('database') || result.error.includes('connect')) {
-          setConfigError('Erreur de connexion à la base de données. Veuillez vérifier la configuration MONGODB_URI.');
-        } else if (result.error.includes('environment') || result.error.includes('configuration')) {
-          setConfigError('Erreur de configuration. Vérifiez que toutes les variables d\'environnement sont correctement configurées.');
+        } else if (result.error.includes('MONGODB_URI validation failed')) {
+          // Extract the specific validation error
+          const validationError = result.error.replace('MONGODB_URI validation failed: ', '');
+          setConfigError(`Erreur de format MONGODB_URI: ${validationError}`);
+        } else if (result.error.includes('authentication failed') || result.error.includes('auth failed')) {
+          setConfigError('Erreur d\'authentification MongoDB. Vérifiez le nom d\'utilisateur et le mot de passe dans MONGODB_URI.');
+        } else if (result.error.includes('host not found') || result.error.includes('ENOTFOUND')) {
+          setConfigError('Impossible de trouver le serveur MongoDB. Vérifiez l\'adresse du cluster dans MONGODB_URI.');
+        } else if (result.error.includes('timed out') || result.error.includes('ETIMEDOUT')) {
+          setConfigError('Délai de connexion MongoDB expiré. Vérifiez la connectivité réseau et la liste blanche IP sur MongoDB Atlas.');
+        } else if (result.error.includes('Invalid connection string') || result.error.includes('URI')) {
+          setConfigError('Format de connexion MongoDB invalide. Vérifiez la syntaxe de MONGODB_URI.');
+        } else if (result.error.includes('Cannot reach MongoDB server')) {
+          setConfigError('Impossible de joindre le serveur MongoDB. Vérifiez la configuration MongoDB Atlas et l\'accès réseau.');
+        } else if (result.error.includes('database') || result.error.includes('MongoDB') || result.error.includes('connect')) {
+          setConfigError(`Erreur de connexion à la base de données: ${result.error}`);
+        } else if (result.error.includes('environment') || result.error.includes('configuration') || result.error.includes('not defined')) {
+          setConfigError(`Erreur de configuration: ${result.error}`);
         } else {
           setError('Une erreur est survenue lors de la connexion. Consultez les logs du serveur pour plus de détails.');
         }
