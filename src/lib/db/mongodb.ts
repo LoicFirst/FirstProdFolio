@@ -131,6 +131,8 @@ async function dbConnect(): Promise<typeof mongoose> {
       socketTimeoutMS: 45000, // 45 seconds for socket timeout
       maxPoolSize: 10, // Maximum number of connections in the pool
       minPoolSize: 2, // Minimum number of connections in the pool
+      retryWrites: true, // Retry write operations that fail due to transient errors
+      retryReads: true, // Retry read operations that fail due to transient errors
     };
 
     cached.promise = mongoose.connect(MONGODB_URI, opts)
