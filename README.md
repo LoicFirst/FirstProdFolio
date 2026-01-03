@@ -63,11 +63,26 @@ git clone https://github.com/LoicFirst/FirstProdFolio.git
 # Installer les dépendances
 npm install
 
+# Configurer les variables d'environnement
+# Copiez .env.example vers .env.local et remplissez les valeurs
+cp .env.example .env.local
+
 # Lancer le serveur de développement
 npm run dev
 ```
 
 Le site sera accessible à l'adresse [http://localhost:3000](http://localhost:3000).
+
+### Configuration de MongoDB
+
+Pour configurer la connexion à MongoDB, consultez le guide détaillé: [MONGODB_SETUP.md](./MONGODB_SETUP.md)
+
+Ce guide couvre:
+- Configuration d'un cluster MongoDB Atlas
+- Format correct de l'URI de connexion
+- Dépannage des erreurs courantes
+- Bonnes pratiques de sécurité
+- Tests de connexion
 
 ## 📝 Configuration du contenu
 
