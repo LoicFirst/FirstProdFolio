@@ -78,7 +78,7 @@ export function handleApiError(error: unknown, context: string): NextResponse {
     }
     
     // Mongoose-specific errors
-    if (error.name === 'ValidationError') {
+    if (error.name === 'ValidationError' || error.message.includes('validation failed')) {
       console.error('[API] Mongoose validation error');
       return NextResponse.json(
         { error: 'Validation error', details: error.message },
@@ -99,13 +99,6 @@ export function handleApiError(error: unknown, context: string): NextResponse {
       return NextResponse.json(
         { error: 'Resource already exists' },
         { status: 409 }
-      );
-    }
-    
-    if (error.message.includes('validation failed')) {
-      return NextResponse.json(
-        { error: 'Validation error', details: error.message },
-        { status: 400 }
       );
     }
   }

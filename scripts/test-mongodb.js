@@ -6,10 +6,14 @@
  * Script de test de connexion MongoDB
  * Ce script vérifie que la connexion à MongoDB fonctionne correctement
  * 
+ * MongoDB Connection Test Script
+ * This script verifies that the MongoDB connection is working properly
+ * 
  * Usage:
  *   node scripts/test-mongodb.js
  *   
  * Ou avec des variables d'environnement personnalisées:
+ * Or with custom environment variables:
  *   MONGODB_URI="mongodb+srv://..." node scripts/test-mongodb.js
  */
 
