@@ -91,6 +91,28 @@ Cela créera :
 - Un utilisateur admin avec les identifiants configurés
 - Les vidéos, photos et informations existantes depuis les fichiers JSON
 
+### Mise à jour des identifiants admin
+
+Si vous avez besoin de mettre à jour les identifiants admin après le déploiement initial :
+
+1. **Mettre à jour les variables d'environnement** sur Vercel :
+   - `ADMIN_EMAIL` : Votre nouvel email admin
+   - `ADMIN_PASSWORD` : Votre nouveau mot de passe admin
+
+2. **Forcer la mise à jour** en appelant l'API de seed avec l'option `forceUpdate` :
+   ```bash
+   curl -X POST https://votre-domaine/api/admin/seed \
+     -H "Content-Type: application/json" \
+     -d '{"secret": "votre-nextauth-secret", "forceUpdate": true}'
+   ```
+
+### Résolution de l'erreur "Configuration"
+
+Si vous voyez l'erreur `?error=Configuration` sur la page de connexion, vérifiez que :
+1. La variable `NEXTAUTH_SECRET` est correctement définie sur Vercel
+2. La variable `NEXTAUTH_URL` correspond à votre URL de production (ex: `https://first-prod-folio.vercel.app`)
+3. La variable `MONGODB_URI` est correctement configurée et accessible
+
 ## 🛡️ Sécurité
 
 ### Bonnes pratiques

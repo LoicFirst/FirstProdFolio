@@ -20,21 +20,37 @@ export async function POST(request: NextRequest) {
 
     await dbConnect();
 
+    // Get admin credentials from environment variables
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin@loicmazagran.com';
+    const adminPassword = process.env.ADMIN_PASSWORD || 'changeme123';
+
+    // Track admin user status
+    let adminUserStatus: 'created' | 'updated' | 'unchanged' = 'unchanged';
+
     // Check if admin user already exists
-    const existingUser = await User.findOne({ role: 'admin' });
+    const existingUser = await User.findOne({ role: 'admin' }).select('+password');
     
     if (!existingUser) {
       // Create admin user
-      const adminEmail = process.env.ADMIN_EMAIL || 'admin@loicmazagran.com';
-      const adminPassword = process.env.ADMIN_PASSWORD || 'changeme123';
-
       await User.create({
         email: adminEmail,
         password: adminPassword,
         name: 'Loic Mazagran',
         role: 'admin',
       });
+      adminUserStatus = 'created';
       console.log('Admin user created');
+    } else {
+      // Update existing admin user credentials if they differ or if force update is requested
+      const needsUpdate = existingUser.email !== adminEmail;
+      
+      if (needsUpdate || body.forceUpdate) {
+        existingUser.email = adminEmail;
+        existingUser.password = adminPassword;
+        await existingUser.save();
+        adminUserStatus = 'updated';
+        console.log('Admin user updated');
+      }
     }
 
     // Seed videos if collection is empty
@@ -80,6 +96,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ 
       message: 'Database seeded successfully',
       seeded: {
+        adminUser: adminUserStatus,
         videos: videoCount === 0,
         photos: photoCount === 0,
         about: aboutCount === 0,
