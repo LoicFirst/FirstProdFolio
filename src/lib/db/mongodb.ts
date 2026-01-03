@@ -5,6 +5,12 @@ interface MongooseCache {
   promise: Promise<typeof mongoose> | null;
 }
 
+/**
+ * Global declaration for mongoose connection cache.
+ * We use `var` here because Next.js hot-reloads in development mode cause
+ * the module to be re-evaluated, which would create new connections.
+ * By storing the connection in `global`, we persist it across hot-reloads.
+ */
 declare global {
   var mongoose: MongooseCache | undefined;
 }
