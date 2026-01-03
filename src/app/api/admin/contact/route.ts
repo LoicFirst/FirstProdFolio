@@ -1,39 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth/options';
 import dbConnect from '@/lib/db/mongodb';
 import Contact from '@/models/Contact';
+import { requireAuth, handleApiError, logApiRequest } from '@/lib/api-helpers';
 
 // GET contact data
 export async function GET() {
+  logApiRequest('GET', '/api/admin/contact');
+  
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const { error } = await requireAuth();
+    if (error) return error;
 
     await dbConnect();
     const contact = await Contact.findOne();
 
+    console.log('[API] ✓ Retrieved contact data');
     return NextResponse.json({ contact });
   } catch (error) {
-    console.error('Error fetching contact:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return handleApiError(error, 'GET /api/admin/contact');
   }
 }
 
 // POST create or update contact data
 export async function POST(request: NextRequest) {
+  logApiRequest('POST', '/api/admin/contact');
+  
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const { error } = await requireAuth();
+    if (error) return error;
 
     await dbConnect();
     const body = await request.json();
+
+    console.log('[API] Upserting contact data');
 
     // Upsert - create if doesn't exist, update if exists
     const contact = await Contact.findOneAndUpdate(
@@ -42,10 +41,10 @@ export async function POST(request: NextRequest) {
       { new: true, upsert: true, runValidators: true }
     );
 
+    console.log('[API] ✓ Contact data updated successfully');
     return NextResponse.json({ contact }, { status: 200 });
   } catch (error) {
-    console.error('Error updating contact:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return handleApiError(error, 'POST /api/admin/contact');
   }
 }
 
