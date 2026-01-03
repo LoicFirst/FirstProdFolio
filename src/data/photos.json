@@ -1,0 +1,84 @@
+{
+  "photos": [
+    {
+      "id": "photo-001",
+      "title": "Reflets Urbains",
+      "description": "Série de photographies capturant les reflets dans les flaques d'eau après la pluie à Paris.",
+      "year": 2026,
+      "image_url": "/images/photos/reflets-urbains.jpg",
+      "thumbnail_url": "/images/photos/thumbs/reflets-urbains.jpg",
+      "category": "Urbain",
+      "location": "Paris, France"
+    },
+    {
+      "id": "photo-002",
+      "title": "Portraits Intimes",
+      "description": "Une série de portraits en noir et blanc explorant l'émotion humaine à travers les expressions du visage.",
+      "year": 2025,
+      "image_url": "/images/photos/portraits-intimes.jpg",
+      "thumbnail_url": "/images/photos/thumbs/portraits-intimes.jpg",
+      "category": "Portrait",
+      "location": "Studio"
+    },
+    {
+      "id": "photo-003",
+      "title": "Paysages Bretons",
+      "description": "Les côtes sauvages de Bretagne sous une lumière dramatique d'orage.",
+      "year": 2025,
+      "image_url": "/images/photos/paysages-bretons.jpg",
+      "thumbnail_url": "/images/photos/thumbs/paysages-bretons.jpg",
+      "category": "Paysage",
+      "location": "Bretagne, France"
+    },
+    {
+      "id": "photo-004",
+      "title": "Scènes de Rue",
+      "description": "Photographie de rue capturant des moments fugaces de la vie quotidienne.",
+      "year": 2024,
+      "image_url": "/images/photos/scenes-rue.jpg",
+      "thumbnail_url": "/images/photos/thumbs/scenes-rue.jpg",
+      "category": "Street Photography",
+      "location": "Lyon, France"
+    },
+    {
+      "id": "photo-005",
+      "title": "Architecture Moderne",
+      "description": "Exploration des lignes et formes de l'architecture contemporaine.",
+      "year": 2024,
+      "image_url": "/images/photos/architecture-moderne.jpg",
+      "thumbnail_url": "/images/photos/thumbs/architecture-moderne.jpg",
+      "category": "Architecture",
+      "location": "La Défense, Paris"
+    },
+    {
+      "id": "photo-006",
+      "title": "Natures Mortes",
+      "description": "Une série de compositions élégantes d'objets du quotidien.",
+      "year": 2023,
+      "image_url": "/images/photos/natures-mortes.jpg",
+      "thumbnail_url": "/images/photos/thumbs/natures-mortes.jpg",
+      "category": "Still Life",
+      "location": "Studio"
+    },
+    {
+      "id": "photo-007",
+      "title": "Coulisses de Tournage",
+      "description": "Moments capturés pendant les tournages de mes courts-métrages.",
+      "year": 2025,
+      "image_url": "/images/photos/coulisses-tournage.jpg",
+      "thumbnail_url": "/images/photos/thumbs/coulisses-tournage.jpg",
+      "category": "Behind the Scenes",
+      "location": "Divers"
+    },
+    {
+      "id": "photo-008",
+      "title": "Lumières de Nuit",
+      "description": "Photographie longue exposition de la ville la nuit.",
+      "year": 2024,
+      "image_url": "/images/photos/lumieres-nuit.jpg",
+      "thumbnail_url": "/images/photos/thumbs/lumieres-nuit.jpg",
+      "category": "Nuit",
+      "location": "Marseille, France"
+    }
+  ]
+}

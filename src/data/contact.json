@@ -1,0 +1,38 @@
+{
+  "contact": {
+    "email": "contact@loicmazagran.com",
+    "phone": "+33 6 XX XX XX XX",
+    "location": "Paris, France"
+  },
+  "social": [
+    {
+      "name": "Instagram",
+      "url": "https://instagram.com/loicmazagran",
+      "icon": "instagram"
+    },
+    {
+      "name": "YouTube",
+      "url": "https://youtube.com/@loicmazagran",
+      "icon": "youtube"
+    },
+    {
+      "name": "Vimeo",
+      "url": "https://vimeo.com/loicmazagran",
+      "icon": "vimeo"
+    },
+    {
+      "name": "LinkedIn",
+      "url": "https://linkedin.com/in/loicmazagran",
+      "icon": "linkedin"
+    },
+    {
+      "name": "Twitter",
+      "url": "https://twitter.com/loicmazagran",
+      "icon": "twitter"
+    }
+  ],
+  "availability": {
+    "status": "available",
+    "message": "Disponible pour de nouveaux projets"
+  }
+}
