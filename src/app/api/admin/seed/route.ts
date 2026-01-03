@@ -42,9 +42,10 @@ export async function POST(request: NextRequest) {
       console.log('Admin user created');
     } else {
       // Update existing admin user credentials if they differ or if force update is requested
+      const forceUpdate = body.forceUpdate === true;
       const needsUpdate = existingUser.email !== adminEmail;
       
-      if (needsUpdate || body.forceUpdate) {
+      if (needsUpdate || forceUpdate) {
         existingUser.email = adminEmail;
         existingUser.password = adminPassword;
         await existingUser.save();
