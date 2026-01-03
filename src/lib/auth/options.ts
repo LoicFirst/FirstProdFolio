@@ -8,18 +8,33 @@ if (!process.env.NEXTAUTH_SECRET && process.env.NODE_ENV === 'production') {
   console.error('NEXTAUTH_SECRET is not set. Authentication will not work properly.');
 }
 
+// Cache to track if admin user has been ensured in this process instance
+let adminUserEnsured = false;
+
 /**
  * Ensures the admin user exists in the database with the correct credentials
  * from environment variables. This is called during authentication to
  * automatically sync the admin user with environment variable settings.
+ * Uses a process-level cache to avoid checking on every authentication attempt.
  */
 async function ensureAdminUser(): Promise<void> {
+  // Skip if already ensured in this process instance
+  if (adminUserEnsured) {
+    return;
+  }
+
   const adminEmail = process.env.ADMIN_EMAIL;
   const adminPassword = process.env.ADMIN_PASSWORD;
   const adminName = process.env.ADMIN_NAME || 'Admin';
 
   // If admin credentials are not configured in environment variables, skip
   if (!adminEmail || !adminPassword) {
+    return;
+  }
+
+  // Validate password meets minimum requirements (8 characters as per User model)
+  if (adminPassword.length < 8) {
+    console.error('ADMIN_PASSWORD must be at least 8 characters');
     return;
   }
 
@@ -38,6 +53,7 @@ async function ensureAdminUser(): Promise<void> {
       console.log('Admin user created from environment variables');
     } else {
       // Check if email or password needs to be updated
+      // comparePassword compares plain text password against bcrypt hash stored in DB
       const emailNeedsUpdate = existingAdmin.email !== adminEmail;
       const passwordMatches = await existingAdmin.comparePassword(adminPassword);
       
@@ -48,6 +64,9 @@ async function ensureAdminUser(): Promise<void> {
         console.log('Admin user credentials updated from environment variables');
       }
     }
+    
+    // Mark as ensured to skip checks in subsequent authentication attempts
+    adminUserEnsured = true;
   } catch (error) {
     console.error('Error ensuring admin user:', error);
     // Don't throw - allow authentication to continue with existing database state

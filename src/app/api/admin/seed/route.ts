@@ -25,6 +25,13 @@ export async function POST(request: NextRequest) {
     const adminPassword = process.env.ADMIN_PASSWORD || 'changeme123';
     const adminName = process.env.ADMIN_NAME || 'Admin';
 
+    // Validate password meets minimum requirements (8 characters as per User model)
+    if (adminPassword.length < 8) {
+      return NextResponse.json({ 
+        error: 'ADMIN_PASSWORD must be at least 8 characters' 
+      }, { status: 400 });
+    }
+
     // Track admin user status
     let adminUserStatus: 'created' | 'updated' | 'unchanged' = 'unchanged';
 
