@@ -23,6 +23,7 @@ export async function POST(request: NextRequest) {
     // Get admin credentials from environment variables
     const adminEmail = process.env.ADMIN_EMAIL || 'admin@loicmazagran.com';
     const adminPassword = process.env.ADMIN_PASSWORD || 'changeme123';
+    const adminName = process.env.ADMIN_NAME || 'Admin';
 
     // Track admin user status
     let adminUserStatus: 'created' | 'updated' | 'unchanged' = 'unchanged';
@@ -35,7 +36,7 @@ export async function POST(request: NextRequest) {
       await User.create({
         email: adminEmail,
         password: adminPassword,
-        name: 'Loic Mazagran',
+        name: adminName,
         role: 'admin',
       });
       adminUserStatus = 'created';

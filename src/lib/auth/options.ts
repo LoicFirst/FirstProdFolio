@@ -16,6 +16,7 @@ if (!process.env.NEXTAUTH_SECRET && process.env.NODE_ENV === 'production') {
 async function ensureAdminUser(): Promise<void> {
   const adminEmail = process.env.ADMIN_EMAIL;
   const adminPassword = process.env.ADMIN_PASSWORD;
+  const adminName = process.env.ADMIN_NAME || 'Admin';
 
   // If admin credentials are not configured in environment variables, skip
   if (!adminEmail || !adminPassword) {
@@ -23,27 +24,28 @@ async function ensureAdminUser(): Promise<void> {
   }
 
   try {
-    // Check if admin user exists
-    const existingAdmin = await User.findOne({ email: adminEmail }).select('+password');
+    // Check if any admin user exists (search by role to stay consistent with seed endpoint)
+    const existingAdmin = await User.findOne({ role: 'admin' }).select('+password');
     
     if (!existingAdmin) {
       // Create new admin user with credentials from environment variables
       await User.create({
         email: adminEmail,
         password: adminPassword,
-        name: 'Loic Mazagran',
+        name: adminName,
         role: 'admin',
       });
       console.log('Admin user created from environment variables');
     } else {
-      // Check if password needs to be updated by verifying against env password
+      // Check if email or password needs to be updated
+      const emailNeedsUpdate = existingAdmin.email !== adminEmail;
       const passwordMatches = await existingAdmin.comparePassword(adminPassword);
       
-      if (!passwordMatches) {
-        // Update the password to match environment variable
+      if (emailNeedsUpdate || !passwordMatches) {
+        existingAdmin.email = adminEmail;
         existingAdmin.password = adminPassword;
         await existingAdmin.save();
-        console.log('Admin user password updated from environment variables');
+        console.log('Admin user credentials updated from environment variables');
       }
     }
   } catch (error) {
