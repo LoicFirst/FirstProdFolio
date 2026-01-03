@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+/* eslint-disable @typescript-eslint/no-require-imports */
+
 /**
  * Script de test de connexion MongoDB
  * Ce script vérifie que la connexion à MongoDB fonctionne correctement
@@ -145,7 +147,7 @@ async function testConnection() {
     
     try {
       await mongoose.connection.close();
-    } catch (closeError) {
+    } catch {
       // Ignorer les erreurs de fermeture
     }
     
