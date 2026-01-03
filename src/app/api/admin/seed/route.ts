@@ -49,16 +49,18 @@ export async function POST(request: NextRequest) {
       adminUserStatus = 'created';
       console.log('Admin user created');
     } else {
-      // Check if email or password needs to be updated
+      // Check if email, name, or password needs to be updated
       const forceUpdate = body.forceUpdate === true;
       const emailNeedsUpdate = existingUser.email !== adminEmail;
+      const nameNeedsUpdate = existingUser.name !== adminName;
       
       // Check if password is different by verifying against the env password
       const passwordMatches = await existingUser.comparePassword(adminPassword);
       const passwordNeedsUpdate = !passwordMatches;
       
-      if (emailNeedsUpdate || passwordNeedsUpdate || forceUpdate) {
+      if (emailNeedsUpdate || nameNeedsUpdate || passwordNeedsUpdate || forceUpdate) {
         existingUser.email = adminEmail;
+        existingUser.name = adminName;
         existingUser.password = adminPassword;
         await existingUser.save();
         adminUserStatus = 'updated';

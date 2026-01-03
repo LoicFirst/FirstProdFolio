@@ -52,13 +52,15 @@ async function ensureAdminUser(): Promise<void> {
       });
       console.log('Admin user created from environment variables');
     } else {
-      // Check if email or password needs to be updated
+      // Check if email, password, or name needs to be updated
       // comparePassword compares plain text password against bcrypt hash stored in DB
       const emailNeedsUpdate = existingAdmin.email !== adminEmail;
+      const nameNeedsUpdate = existingAdmin.name !== adminName;
       const passwordMatches = await existingAdmin.comparePassword(adminPassword);
       
-      if (emailNeedsUpdate || !passwordMatches) {
+      if (emailNeedsUpdate || nameNeedsUpdate || !passwordMatches) {
         existingAdmin.email = adminEmail;
+        existingAdmin.name = adminName;
         existingAdmin.password = adminPassword;
         await existingAdmin.save();
         console.log('Admin user credentials updated from environment variables');
