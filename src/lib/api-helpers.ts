@@ -84,5 +84,23 @@ export function handleApiError(error: unknown, context: string): NextResponse {
  * Helper to log API request
  */
 export function logApiRequest(method: string, path: string, userId?: string) {
-  console.log(`[API] ${method} ${path}`, userId ? `by user: ${userId}` : '');
+  console.log(`[API] ${method} ${path}`, userId ? `by user ID: ${userId}` : '');
+}
+
+/**
+ * Helper to mask email addresses in logs for security
+ * Returns first character + *** + @ + domain
+ * Returns '***' if email is invalid/malformed
+ */
+export function maskEmail(email: string | undefined | null): string {
+  if (!email || typeof email !== 'string') {
+    return '***';
+  }
+  
+  const parts = email.split('@');
+  if (parts.length !== 2 || !parts[0] || !parts[1]) {
+    return '***';
+  }
+  
+  return parts[0].charAt(0) + '***@' + parts[1];
 }

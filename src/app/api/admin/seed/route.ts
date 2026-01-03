@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db/mongodb';
 import { User, Video, Photo, About, Contact } from '@/models';
-import { logApiRequest } from '@/lib/api-helpers';
+import { logApiRequest, maskEmail } from '@/lib/api-helpers';
 
 // Import static data
 import videosData from '@/data/videos.json';
@@ -30,9 +30,7 @@ export async function POST(request: NextRequest) {
     const adminPassword = process.env.ADMIN_PASSWORD || 'changeme123';
     const adminName = process.env.ADMIN_NAME || 'Admin';
 
-    // Mask email for security in logs
-    const maskedEmail = adminEmail.charAt(0) + '***@' + adminEmail.split('@')[1];
-    console.log('[SEED] Admin credentials:', { email: maskedEmail, name: adminName });
+    console.log('[SEED] Admin credentials:', { email: maskEmail(adminEmail), name: adminName });
 
     // Validate password meets minimum requirements (8 characters as per User model)
     if (adminPassword.length < 8) {

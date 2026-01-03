@@ -2,6 +2,7 @@ import { AuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import dbConnect from '@/lib/db/mongodb';
 import User from '@/models/User';
+import { maskEmail } from '@/lib/api-helpers';
 
 // Ensure NEXTAUTH_SECRET is set in production
 if (!process.env.NEXTAUTH_SECRET && process.env.NODE_ENV === 'production') {
@@ -60,9 +61,7 @@ async function ensureAdminUser(): Promise<void> {
     return;
   }
 
-  // Mask email for security in logs (show first char and domain)
-  const maskedEmail = adminEmail.charAt(0) + '***@' + adminEmail.split('@')[1];
-  console.log('[AUTH] Admin credentials validated. Email:', maskedEmail);
+  console.log('[AUTH] Admin credentials validated. Email:', maskEmail(adminEmail));
 
   try {
     // Check if any admin user exists (search by role to stay consistent with seed endpoint)
@@ -113,7 +112,8 @@ async function ensureAdminUser(): Promise<void> {
     }
     // Don't set adminUserEnsured to true on error - allow retry on next attempt
     // Don't re-throw to prevent auth failures from crashing the app
-    // The authorize function will still work with existing users
+    // Note: The authorize function will still work with existing users even if sync fails
+    console.warn('[AUTH] WARNING: Admin user synchronization failed. Authentication will continue with existing users only.');
   }
 }
 
@@ -133,8 +133,7 @@ export const authOptions: AuthOptions = {
           throw new Error('Email and password are required');
         }
 
-        const maskedEmail = credentials.email.charAt(0) + '***@' + credentials.email.split('@')[1];
-        console.log('[AUTH] Credentials provided. Email:', maskedEmail);
+        console.log('[AUTH] Credentials provided. Email:', maskEmail(credentials.email));
 
         try {
           console.log('[AUTH] Attempting database connection...');
@@ -192,9 +191,7 @@ export const authOptions: AuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        // Mask email in logs
-        const maskedEmail = user.email?.charAt(0) + '***@' + user.email?.split('@')[1];
-        console.log('[AUTH] JWT callback - creating token for user:', maskedEmail);
+        console.log('[AUTH] JWT callback - creating token for user:', maskEmail(user.email));
         token.id = user.id;
         token.role = (user as { role?: string }).role;
       }
@@ -202,9 +199,7 @@ export const authOptions: AuthOptions = {
     },
     async session({ session, token }) {
       if (session.user) {
-        // Mask email in logs
-        const maskedEmail = session.user.email?.charAt(0) + '***@' + session.user.email?.split('@')[1];
-        console.log('[AUTH] Session callback - creating session for user:', maskedEmail);
+        console.log('[AUTH] Session callback - creating session for user:', maskEmail(session.user.email));
         (session.user as { id?: string }).id = token.id as string;
         (session.user as { role?: string }).role = token.role as string;
       }
