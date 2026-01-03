@@ -61,11 +61,11 @@ Créez un fichier `.env.local` avec les variables suivantes :
 
 ```env
 # Base de données MongoDB
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/portfolio
+MONGODB_URI=mongodb+srv://steveduchan2007_db_user:fhXJuCrVc95T8Xh@cluster0.tvtrbmv.mongodb.net/portfolio?retryWrites=true&w=majority
 
 # NextAuth.js (authentification)
-NEXTAUTH_URL=https://votre-domaine.vercel.app
-NEXTAUTH_SECRET=votre-secret-genere-avec-openssl-rand-base64-32
+NEXTAUTH_URL=https://first-prod-folio.vercel.app
+NEXTAUTH_SECRET=v9j9sPqkmnJoQymkPVBWicfALfI5p/5Eu/Uk0eGAqpU=
 
 # Identifiants admin
 ADMIN_EMAIL=loicmazagran2007@gmail.com
