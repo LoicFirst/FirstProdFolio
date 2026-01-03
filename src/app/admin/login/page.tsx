@@ -55,6 +55,8 @@ export default function AdminLoginPage() {
     setConfigError('');
     setLoading(true);
 
+    console.log('[LOGIN] Attempting login for email:', email);
+
     try {
       const result = await signIn('credentials', {
         email,
@@ -62,16 +64,31 @@ export default function AdminLoginPage() {
         redirect: false,
       });
 
+      console.log('[LOGIN] SignIn result:', result);
+
       if (result?.error) {
-        setError('Email ou mot de passe incorrect');
+        console.error('[LOGIN] Authentication failed:', result.error);
+        
+        // Provide more specific error messages
+        if (result.error === 'CredentialsSignin' || result.error === 'Invalid credentials') {
+          setError('Email ou mot de passe incorrect. Vérifiez vos identifiants et réessayez.');
+        } else if (result.error.includes('database') || result.error.includes('connect')) {
+          setConfigError('Erreur de connexion à la base de données. Veuillez vérifier la configuration MONGODB_URI.');
+        } else if (result.error.includes('environment') || result.error.includes('configuration')) {
+          setConfigError('Erreur de configuration. Vérifiez que toutes les variables d\'environnement sont correctement configurées.');
+        } else {
+          setError('Une erreur est survenue lors de la connexion. Consultez les logs du serveur pour plus de détails.');
+        }
         setLoading(false);
       } else {
+        console.log('[LOGIN] ✓ Authentication successful, redirecting to dashboard...');
         // Use window.location for a full page navigation to ensure
         // the session is properly established before rendering the dashboard
         window.location.href = '/admin/dashboard';
       }
-    } catch {
-      setError('Une erreur est survenue');
+    } catch (err) {
+      console.error('[LOGIN] Unexpected error during login:', err);
+      setError('Une erreur inattendue est survenue. Veuillez réessayer.');
       setLoading(false);
     }
   };

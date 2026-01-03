@@ -1,39 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth/options';
 import dbConnect from '@/lib/db/mongodb';
 import About from '@/models/About';
+import { requireAuth, handleApiError, logApiRequest } from '@/lib/api-helpers';
 
 // GET about data
 export async function GET() {
+  logApiRequest('GET', '/api/admin/about');
+  
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const { error } = await requireAuth();
+    if (error) return error;
 
     await dbConnect();
     const about = await About.findOne();
 
+    console.log('[API] ✓ Retrieved about data');
     return NextResponse.json({ about });
   } catch (error) {
-    console.error('Error fetching about:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return handleApiError(error, 'GET /api/admin/about');
   }
 }
 
 // POST create or update about data
 export async function POST(request: NextRequest) {
+  logApiRequest('POST', '/api/admin/about');
+  
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const { error } = await requireAuth();
+    if (error) return error;
 
     await dbConnect();
     const body = await request.json();
+
+    console.log('[API] Upserting about data');
 
     // Upsert - create if doesn't exist, update if exists
     const about = await About.findOneAndUpdate(
@@ -42,10 +41,10 @@ export async function POST(request: NextRequest) {
       { new: true, upsert: true, runValidators: true }
     );
 
+    console.log('[API] ✓ About data updated successfully');
     return NextResponse.json({ about }, { status: 200 });
   } catch (error) {
-    console.error('Error updating about:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return handleApiError(error, 'POST /api/admin/about');
   }
 }
 
