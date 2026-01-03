@@ -61,7 +61,8 @@ Créez un fichier `.env.local` avec les variables suivantes :
 
 ```env
 # Base de données MongoDB
-MONGODB_URI=mongodb+srv://steveduchan2007_db_user:fhXJuCrVc95T8Xh@cluster0.tvtrbmv.mongodb.net/portfolio?retryWrites=true&w=majority
+# Format recommandé par MongoDB Atlas (décembre 2024+)
+MONGODB_URI=mongodb+srv://steveduchan2007_db_user:fhXJuCrVc95T8Xh@cluster0.tvtrbmv.mongodb.net/?appName=Cluster0
 
 # NextAuth.js (authentification)
 NEXTAUTH_URL=https://first-prod-folio.vercel.app
@@ -136,9 +137,22 @@ Si vous ne pouvez pas vous connecter avec les bons identifiants :
 #### Problèmes de connexion à la base de données
 
 Si vous voyez des erreurs liées à MongoDB :
-1. **Vérifier MONGODB_URI** : La chaîne de connexion doit être valide et accessible
-2. **Timeout de connexion** : Le système utilise un timeout de 10 secondes pour la connexion initiale
-3. **Whitelist IP** : Sur MongoDB Atlas, assurez-vous que l'IP de Vercel est autorisée (ou utilisez `0.0.0.0/0` pour autoriser toutes les IPs)
+1. **Vérifier le format de MONGODB_URI** : 
+   - Format correct: `mongodb+srv://username:password@cluster.mongodb.net/?appName=ClusterName`
+   - Format ancien (peut causer des problèmes): `mongodb+srv://username:password@cluster.mongodb.net/database?retryWrites=true&w=majority`
+   - **IMPORTANT**: Ne pas utiliser de chevrons `< >` autour du mot de passe. Exemple INCORRECT: `mongodb+srv://user:<password>@...`
+   - Le système valide maintenant le format de l'URI avant de tenter la connexion
+2. **Erreurs de validation courantes**:
+   - "contains placeholder password": Remplacez `<password>` par votre mot de passe réel
+   - "must start with mongodb://": Vérifiez que l'URI commence correctement
+   - "credentials format is invalid": Format attendu `username:password@host`
+   - "missing the host/cluster address": Ajoutez l'adresse du cluster après `@`
+3. **Erreurs de connexion**:
+   - "authentication failed": Nom d'utilisateur ou mot de passe incorrect dans l'URI
+   - "host not found": Adresse du cluster incorrecte ou problème DNS
+   - "timed out": Problème réseau ou IP non autorisée dans MongoDB Atlas
+4. **Timeout de connexion** : Le système utilise un timeout de 10 secondes pour la connexion initiale
+5. **Whitelist IP** : Sur MongoDB Atlas, assurez-vous que l'IP de Vercel est autorisée (ou utilisez `0.0.0.0/0` pour autoriser toutes les IPs)
 
 #### Chargement lent ou timeout
 
@@ -210,10 +224,13 @@ En cas de problème ou question, consultez la documentation technique ou contact
 **v2.0.0 (Janvier 2026)**
 - ✨ Système de logging détaillé pour faciliter le debugging
 - 🔒 Validation des variables d'environnement au démarrage
+- 🔍 **Validation robuste du format MONGODB_URI avec messages d'erreur détaillés**
 - 🐛 Amélioration de la gestion des erreurs de connexion
 - 📊 Timeouts configurés pour MongoDB (10s connexion, 45s opérations)
-- 🔧 Messages d'erreur plus précis et informatifs
+- 🔧 Messages d'erreur plus précis et informatifs (authentification, DNS, timeout, etc.)
+- 🎯 **Catégorisation des erreurs MongoDB pour un diagnostic rapide**
 - 📝 Documentation enrichie avec section de troubleshooting
+- 🛡️ **Détection des mots de passe placeholder dans l'URI**
 
 **v1.0.0**
 - Lancement initial du panneau d'administration
