@@ -1,0 +1,64 @@
+{
+  "videos": [
+    {
+      "id": "video-001",
+      "title": "Éclats de Lumière",
+      "description": "Un court-métrage expérimental explorant les jeux de lumière et d'ombre dans un environnement urbain nocturne. Une réflexion poétique sur la solitude moderne.",
+      "year": 2026,
+      "video_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "thumbnail_url": "/images/thumbnails/eclats-lumiere.jpg",
+      "duration": "12:34",
+      "category": "Court-métrage"
+    },
+    {
+      "id": "video-002",
+      "title": "L'Horizon Invisible",
+      "description": "Un documentaire intimiste sur les marins pêcheurs de Bretagne. Entre tradition et modernité, ce film capture l'essence d'un métier en voie de disparition.",
+      "year": 2025,
+      "video_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "thumbnail_url": "/images/thumbnails/horizon-invisible.jpg",
+      "duration": "24:15",
+      "category": "Documentaire"
+    },
+    {
+      "id": "video-003",
+      "title": "Murmures",
+      "description": "Une fiction dramatique sur le pouvoir des mots non-dits. Deux personnages se croisent dans une gare, leurs regards en disent plus que mille paroles.",
+      "year": 2025,
+      "video_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "thumbnail_url": "/images/thumbnails/murmures.jpg",
+      "duration": "8:42",
+      "category": "Court-métrage"
+    },
+    {
+      "id": "video-004",
+      "title": "Chromatic Dreams",
+      "description": "Un clip musical expérimental mêlant animation 2D et prises de vue réelles. Une explosion de couleurs et de créativité visuelle.",
+      "year": 2024,
+      "video_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "thumbnail_url": "/images/thumbnails/chromatic-dreams.jpg",
+      "duration": "4:28",
+      "category": "Clip musical"
+    },
+    {
+      "id": "video-005",
+      "title": "Entre Les Murs",
+      "description": "Un court-métrage social abordant la vie quotidienne dans les quartiers populaires. Portrait sensible et nuancé d'une jeunesse en quête d'identité.",
+      "year": 2024,
+      "video_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "thumbnail_url": "/images/thumbnails/entre-les-murs.jpg",
+      "duration": "18:55",
+      "category": "Court-métrage"
+    },
+    {
+      "id": "video-006",
+      "title": "Nuit Blanche",
+      "description": "Publicité cinématographique pour une marque de parfum de luxe. Un voyage sensoriel à travers Paris endormie.",
+      "year": 2023,
+      "video_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "thumbnail_url": "/images/thumbnails/nuit-blanche.jpg",
+      "duration": "1:30",
+      "category": "Publicité"
+    }
+  ]
+}

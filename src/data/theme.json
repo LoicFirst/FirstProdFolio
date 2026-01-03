@@ -1,0 +1,19 @@
+{
+  "theme": {
+    "primary_color": "#3498db",
+    "secondary_color": "#2ecc71",
+    "accent_color": "#e74c3c",
+    "background_dark": "#0a0a0a",
+    "background_light": "#ffffff",
+    "text_light": "#ededed",
+    "text_dark": "#171717",
+    "font_family": "Roboto, sans-serif",
+    "font_heading": "Playfair Display, serif"
+  },
+  "site": {
+    "name": "Loic Mazagran",
+    "title": "Réalisateur, monteur et créateur de contenus visuels",
+    "tagline": "Transformer vos idées en images qui racontent des histoires",
+    "description": "Portfolio de Loic Mazagran - Réalisateur et créateur de contenus visuels spécialisé dans les courts-métrages, la vidéo et la photo."
+  }
+}

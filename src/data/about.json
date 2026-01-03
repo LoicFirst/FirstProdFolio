@@ -1,0 +1,77 @@
+{
+  "profile": {
+    "name": "Loic Mazagran",
+    "title": "Réalisateur, Monteur & Créateur de Contenus Visuels",
+    "bio": "Loic Mazagran, réalisateur et monteur avec plus de 5 ans d'expérience dans la création de courts-métrages et autres contenus artistiques. Passionné par le cinéma depuis mon plus jeune âge, j'ai développé un style visuel unique qui mêle narration émotionnelle et esthétique soignée. Chaque projet est pour moi l'occasion de raconter une histoire, de capturer une émotion, de créer un moment suspendu dans le temps.",
+    "photo_url": "/images/profile/loic-mazagran.jpg",
+    "experience_years": 5,
+    "location": "Paris, France"
+  },
+  "skills": [
+    {
+      "category": "Réalisation",
+      "items": ["Direction artistique", "Cadrage", "Mise en scène", "Direction d'acteurs"]
+    },
+    {
+      "category": "Post-production",
+      "items": ["Montage vidéo", "Étalonnage colorimétrique", "Effets visuels", "Sound design"]
+    },
+    {
+      "category": "Photographie",
+      "items": ["Portrait", "Paysage", "Street photography", "Photographie de studio"]
+    },
+    {
+      "category": "Technique",
+      "items": ["Éclairage", "Prise de son", "Drone", "Steadicam"]
+    }
+  ],
+  "software": [
+    {
+      "name": "Adobe Premiere Pro",
+      "level": 95,
+      "icon": "premiere"
+    },
+    {
+      "name": "After Effects",
+      "level": 90,
+      "icon": "aftereffects"
+    },
+    {
+      "name": "DaVinci Resolve",
+      "level": 85,
+      "icon": "davinci"
+    },
+    {
+      "name": "Adobe Photoshop",
+      "level": 80,
+      "icon": "photoshop"
+    },
+    {
+      "name": "Adobe Lightroom",
+      "level": 85,
+      "icon": "lightroom"
+    },
+    {
+      "name": "Final Cut Pro",
+      "level": 75,
+      "icon": "finalcut"
+    }
+  ],
+  "achievements": [
+    {
+      "year": 2025,
+      "title": "Prix du Meilleur Court-Métrage",
+      "event": "Festival du Film de Bordeaux"
+    },
+    {
+      "year": 2024,
+      "title": "Sélection Officielle",
+      "event": "Festival International du Court-Métrage de Clermont-Ferrand"
+    },
+    {
+      "year": 2023,
+      "title": "Mention Spéciale du Jury",
+      "event": "Festival Premiers Plans d'Angers"
+    }
+  ]
+}
