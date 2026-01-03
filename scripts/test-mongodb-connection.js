@@ -28,10 +28,22 @@ function loadEnvFile() {
   
   const envContent = fs.readFileSync(envPath, 'utf8');
   envContent.split('\n').forEach(line => {
+    // Skip comments and empty lines
+    if (line.trim().startsWith('#') || !line.trim()) {
+      return;
+    }
+    
     const match = line.match(/^([^=:#]+)=(.*)$/);
     if (match) {
       const key = match[1].trim();
-      const value = match[2].trim();
+      let value = match[2].trim();
+      
+      // Remove surrounding quotes if present
+      if ((value.startsWith('"') && value.endsWith('"')) || 
+          (value.startsWith("'") && value.endsWith("'"))) {
+        value = value.slice(1, -1);
+      }
+      
       if (key && value) {
         process.env[key] = value;
       }
@@ -105,9 +117,15 @@ function validateMongoDBUri(uri) {
       };
     }
     
-    if (password.toLowerCase().includes('password') || 
-        password.toLowerCase().includes('your_password') ||
-        password === 'YOUR_PASSWORD') {
+    const lowerPassword = password.toLowerCase();
+    const placeholderPatterns = [
+      'password', 'your_password', 'yourpassword', 'pass', 'pwd',
+      'changeme', 'change_me', 'temp', 'test', '123456'
+    ];
+    
+    if (placeholderPatterns.some(pattern => lowerPassword === pattern) ||
+        lowerPassword.startsWith('password') || 
+        lowerPassword.startsWith('your')) {
       return {
         isValid: false,
         error: 'Le mot de passe semble être un placeholder.'
@@ -158,7 +176,13 @@ async function testConnection() {
   }
   
   // Masquer partiellement l'URI pour la sécurité
-  const maskedUri = MONGODB_URI.replace(/(:\/\/)([^:]+):([^@]+)(@)/, '$1***:***$4');
+  let maskedUri;
+  try {
+    maskedUri = MONGODB_URI.replace(/(:\/\/)([^:]+):([^@]+)(@)/, '$1***:***$4');
+  } catch (error) {
+    // If masking fails, just show a generic message
+    maskedUri = 'mongodb+srv://***:***@***';
+  }
   console.log('✅ MONGODB_URI trouvé:', maskedUri);
 
   // Étape 3: Valider le format

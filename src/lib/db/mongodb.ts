@@ -98,12 +98,25 @@ export function validateMongoDBUri(uri: string): { isValid: boolean; error?: str
     }
     
     // Check for common placeholder patterns
-    if (password.toLowerCase().includes('password') || 
-        password.toLowerCase().includes('your_password') ||
-        password === 'YOUR_PASSWORD') {
+    const lowerPassword = password.toLowerCase();
+    const placeholderPatterns = [
+      'password', 'your_password', 'yourpassword', 'pass', 'pwd',
+      'changeme', 'change_me', 'temp', 'test', '123456'
+    ];
+    
+    // Check if password matches common placeholders exactly (case insensitive)
+    if (placeholderPatterns.some(pattern => lowerPassword === pattern)) {
       return {
         isValid: false,
-        error: 'Le mot de passe MongoDB semble être un placeholder. Remplacez "password" ou "YOUR_PASSWORD" par votre mot de passe réel MongoDB Atlas.'
+        error: 'Le mot de passe MongoDB semble être un placeholder. Remplacez-le par votre mot de passe réel MongoDB Atlas.'
+      };
+    }
+    
+    // Check if password is suspiciously simple (e.g., "password123", "yourpassword")
+    if (lowerPassword.startsWith('password') || lowerPassword.startsWith('your')) {
+      return {
+        isValid: false,
+        error: 'Le mot de passe MongoDB semble être un placeholder ou trop simple. Utilisez votre mot de passe réel MongoDB Atlas.'
       };
     }
     
@@ -296,8 +309,11 @@ async function dbConnect(): Promise<typeof mongoose> {
   return cached.conn;
 }
 
-// Add connection event listeners for better debugging
-if (mongoose.connection) {
+// Track if event listeners have been added to prevent duplicates
+let eventListenersAdded = false;
+
+// Add connection event listeners for better debugging (only once)
+if (mongoose.connection && !eventListenersAdded) {
   mongoose.connection.on('connected', () => {
     console.log('[DB] Mongoose connecté à la base de données');
   });
@@ -317,6 +333,8 @@ if (mongoose.connection) {
   mongoose.connection.on('close', () => {
     console.log('[DB] Connexion Mongoose fermée');
   });
+  
+  eventListenersAdded = true;
 }
 
 export default dbConnect;
