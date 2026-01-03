@@ -1,0 +1,116 @@
+# Administration du Portfolio - Guide d'utilisation
+
+Ce document explique comment utiliser l'interface d'administration privée du portfolio de Loic Mazagran.
+
+## 🔐 Accès à l'interface d'administration
+
+### URL d'accès
+L'interface d'administration est accessible à l'adresse suivante :
+- **Production** : `https://first-prod-folio.vercel.app/admin`
+- **Local** : `http://localhost:3000/admin`
+
+### Connexion
+Utilisez vos identifiants configurés lors du déploiement :
+- **Email** : Défini dans la variable d'environnement `ADMIN_EMAIL`
+- **Mot de passe** : Défini dans la variable d'environnement `ADMIN_PASSWORD`
+
+## 📋 Fonctionnalités disponibles
+
+### 1. Dashboard
+Vue d'ensemble de votre portfolio avec :
+- Statistiques rapides (nombre de vidéos, photos)
+- Accès rapide à toutes les sections
+- Guide d'utilisation intégré
+
+### 2. Gestion des Vidéos
+- **Ajouter** une nouvelle vidéo avec titre, description, URL YouTube/Vimeo, miniature, durée et catégorie
+- **Modifier** les informations d'une vidéo existante
+- **Supprimer** une vidéo
+- **Publier/Dépublier** une vidéo (les vidéos non publiées n'apparaissent pas sur le site public)
+
+### 3. Gestion des Photos
+- **Ajouter** une nouvelle photo avec titre, description, image, catégorie et lieu
+- **Télécharger** des images directement vers le cloud (Cloudinary)
+- **Modifier** les informations d'une photo existante
+- **Supprimer** une photo
+- **Publier/Dépublier** une photo
+
+### 4. Page À propos
+- **Profil** : Modifier votre nom, titre, biographie, photo, années d'expérience et localisation
+- **Compétences** : Ajouter/modifier/supprimer des catégories de compétences
+- **Logiciels** : Gérer la liste des logiciels maîtrisés avec leur niveau de maîtrise
+- **Récompenses** : Ajouter/modifier/supprimer vos distinctions et prix
+
+### 5. Informations de Contact
+- **Contact** : Modifier votre email, téléphone et localisation
+- **Disponibilité** : Indiquer votre statut (disponible, occupé, non disponible)
+- **Réseaux sociaux** : Ajouter/modifier/supprimer vos liens vers Instagram, YouTube, Vimeo, LinkedIn, Twitter
+
+## 🔄 Synchronisation avec le site public
+
+Les modifications effectuées dans l'interface d'administration sont **automatiquement synchronisées** avec le site public :
+- Les changements sont enregistrés en base de données
+- Le site public récupère les données depuis la base de données
+- Aucune action manuelle n'est nécessaire
+
+## ⚙️ Configuration technique
+
+### Variables d'environnement requises
+
+Créez un fichier `.env.local` avec les variables suivantes :
+
+```env
+# Base de données MongoDB
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/portfolio
+
+# NextAuth.js (authentification)
+NEXTAUTH_URL=https://votre-domaine.vercel.app
+NEXTAUTH_SECRET=votre-secret-genere-avec-openssl-rand-base64-32
+
+# Identifiants admin
+ADMIN_EMAIL=admin@loicmazagran.com
+ADMIN_PASSWORD=votre-mot-de-passe-securise
+
+# Cloudinary (upload d'images)
+CLOUDINARY_CLOUD_NAME=votre-cloud-name
+CLOUDINARY_API_KEY=votre-api-key
+CLOUDINARY_API_SECRET=votre-api-secret
+```
+
+### Initialisation de la base de données
+
+Lors du premier déploiement, vous pouvez initialiser la base de données avec les données existantes en utilisant l'API de seed :
+
+```bash
+curl -X POST https://votre-domaine/api/admin/seed \
+  -H "Content-Type: application/json" \
+  -d '{"secret": "votre-nextauth-secret"}'
+```
+
+Cela créera :
+- Un utilisateur admin avec les identifiants configurés
+- Les vidéos, photos et informations existantes depuis les fichiers JSON
+
+## 🛡️ Sécurité
+
+### Bonnes pratiques
+1. **Mot de passe fort** : Utilisez un mot de passe d'au moins 12 caractères avec majuscules, minuscules, chiffres et caractères spéciaux
+2. **Secret unique** : Générez un secret NextAuth unique avec `openssl rand -base64 32`
+3. **Variables d'environnement** : Ne commitez jamais vos variables d'environnement dans le code
+4. **Déconnexion** : Déconnectez-vous toujours après utilisation
+
+### Fonctionnalités de sécurité intégrées
+- Hachage des mots de passe avec bcrypt (12 rounds)
+- Sessions JWT avec expiration automatique (24h)
+- Protection CSRF intégrée à NextAuth.js
+- Validation des données côté serveur
+- Routes API protégées par authentification
+
+## 📞 Support
+
+En cas de problème ou question, consultez la documentation technique ou contactez le développeur.
+
+---
+
+**Version** : 1.0.0
+**Dernière mise à jour** : Janvier 2026

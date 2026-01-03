@@ -1,8 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import FloatingContact from "@/components/FloatingContact";
 
 export const metadata: Metadata = {
   title: "Loic Mazagran | Réalisateur & Créateur de Contenus Visuels",
@@ -30,12 +27,7 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <body className="antialiased bg-black text-white min-h-screen font-sans">
-        <Header />
-        <main className="pt-16">
-          {children}
-        </main>
-        <Footer />
-        <FloatingContact />
+        {children}
       </body>
     </html>
   );
