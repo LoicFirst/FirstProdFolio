@@ -80,7 +80,9 @@ export default function ContactForm() {
 
     setIsSubmitting(true);
 
-    // Simulate API call
+    // TODO: Replace with actual form submission logic for production
+    // Example: Use SendGrid, Nodemailer, or serverless functions to send emails
+    // For now, this simulates a successful submission for demo purposes
     try {
       await new Promise((resolve) => setTimeout(resolve, 1500));
       setSubmitStatus('success');
