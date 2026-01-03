@@ -14,8 +14,6 @@ const iconMap: { [key: string]: React.ComponentType<{ className?: string }> } = 
 };
 
 export default function Footer() {
-  const currentYear = new Date().getFullYear();
-
   return (
     <footer className="bg-black border-t border-gray-800">
       <div className="container mx-auto px-6 py-12">
@@ -89,8 +87,8 @@ export default function Footer() {
 
         {/* Copyright */}
         <div className="mt-12 pt-8 border-t border-gray-800 text-center">
-          <p className="text-gray-500 text-sm">
-            © {currentYear} Loic Mazagran. Tous droits réservés.
+          <p className="text-gray-500 text-sm" suppressHydrationWarning>
+            © {new Date().getFullYear()} Loic Mazagran. Tous droits réservés.
           </p>
         </div>
       </div>

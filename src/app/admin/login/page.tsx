@@ -202,7 +202,7 @@ export default function AdminLoginPage() {
           </form>
         </div>
 
-        <p className="text-center text-gray-500 text-sm mt-6">
+        <p className="text-center text-gray-500 text-sm mt-6" suppressHydrationWarning>
           &copy; {new Date().getFullYear()} Loic Mazagran. Tous droits réservés.
         </p>
       </motion.div>

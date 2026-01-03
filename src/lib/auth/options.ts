@@ -29,6 +29,7 @@ async function ensureAdminUser(): Promise<void> {
 
   // If admin credentials are not configured in environment variables, skip
   if (!adminEmail || !adminPassword) {
+    console.log('Admin credentials not configured in environment variables, skipping admin sync');
     return;
   }
 
@@ -51,6 +52,8 @@ async function ensureAdminUser(): Promise<void> {
         role: 'admin',
       });
       console.log('Admin user created from environment variables');
+      // Mark as ensured only after successful creation
+      adminUserEnsured = true;
     } else {
       // Check if email, password, or name needs to be updated
       // comparePassword compares plain text password against bcrypt hash stored in DB
@@ -65,13 +68,12 @@ async function ensureAdminUser(): Promise<void> {
         await existingAdmin.save();
         console.log('Admin user credentials updated from environment variables');
       }
+      // Mark as ensured after successful check/update
+      adminUserEnsured = true;
     }
-    
-    // Mark as ensured to skip checks in subsequent authentication attempts
-    adminUserEnsured = true;
   } catch (error) {
     console.error('Error ensuring admin user:', error);
-    // Don't throw - allow authentication to continue with existing database state
+    // Don't set adminUserEnsured to true on error - allow retry on next attempt
   }
 }
 
