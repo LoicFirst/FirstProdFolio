@@ -1,37 +1,53 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { signIn } from 'next-auth/react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useEffect, useMemo } from 'react';
+import { signIn, useSession } from 'next-auth/react';
+import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { HiLockClosed, HiMail, HiEye, HiEyeOff, HiExclamationCircle } from 'react-icons/hi';
 
+// Helper to get initial error state from URL
+function getInitialErrors(searchParams: URLSearchParams): { error: string; configError: string } {
+  const urlError = searchParams.get('error');
+  if (!urlError) return { error: '', configError: '' };
+  
+  if (urlError === 'Configuration') {
+    return {
+      error: '',
+      configError: 'Erreur de configuration du serveur. Veuillez vérifier que les variables d\'environnement NEXTAUTH_SECRET, NEXTAUTH_URL et MONGODB_URI sont correctement configurées sur Vercel.',
+    };
+  } else if (urlError === 'CredentialsSignin') {
+    return { error: 'Email ou mot de passe incorrect', configError: '' };
+  } else {
+    return { error: 'Une erreur est survenue lors de la connexion', configError: '' };
+  }
+}
+
 export default function AdminLoginPage() {
+  const searchParams = useSearchParams();
+  const initialErrors = useMemo(() => getInitialErrors(searchParams), [searchParams]);
+  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
-  const [configError, setConfigError] = useState('');
+  const [error, setError] = useState(initialErrors.error);
+  const [configError, setConfigError] = useState(initialErrors.configError);
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  const { status } = useSession();
 
-  // Check for NextAuth error in URL parameters
+  // Clear URL error params after reading them
   useEffect(() => {
-    const urlError = searchParams.get('error');
-    if (urlError) {
-      // Clear the error from URL without reload
+    if (searchParams.get('error')) {
       window.history.replaceState({}, '', '/admin/login');
-      
-      if (urlError === 'Configuration') {
-        setConfigError('Erreur de configuration du serveur. Veuillez vérifier que les variables d\'environnement NEXTAUTH_SECRET, NEXTAUTH_URL et MONGODB_URI sont correctement configurées sur Vercel.');
-      } else if (urlError === 'CredentialsSignin') {
-        setError('Email ou mot de passe incorrect');
-      } else {
-        setError('Une erreur est survenue lors de la connexion');
-      }
     }
   }, [searchParams]);
+
+  // Redirect to dashboard if already authenticated
+  useEffect(() => {
+    if (status === 'authenticated') {
+      window.location.href = '/admin/dashboard';
+    }
+  }, [status]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,15 +64,31 @@ export default function AdminLoginPage() {
 
       if (result?.error) {
         setError('Email ou mot de passe incorrect');
+        setLoading(false);
       } else {
-        router.push('/admin/dashboard');
+        // Use window.location for a full page navigation to ensure
+        // the session is properly established before rendering the dashboard
+        window.location.href = '/admin/dashboard';
       }
     } catch {
       setError('Une erreur est survenue');
-    } finally {
       setLoading(false);
     }
   };
+
+  // Show loading state while checking session or if already authenticated
+  if (status === 'loading' || status === 'authenticated') {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-gray-400 mt-4">
+            {status === 'authenticated' ? 'Redirection...' : 'Chargement...'}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center p-6">
