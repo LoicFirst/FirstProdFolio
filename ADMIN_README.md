@@ -70,12 +70,20 @@ NEXTAUTH_SECRET=v9j9sPqkmnJoQymkPVBWicfALfI5p/5Eu/Uk0eGAqpU=
 # Identifiants admin
 ADMIN_EMAIL=loicmazagran2007@gmail.com
 ADMIN_PASSWORD=jf5z243LuwKvt
+ADMIN_NAME=Loic Mazagran
 
 # Cloudinary (upload d'images)
 CLOUDINARY_CLOUD_NAME=votre-cloud-name
 CLOUDINARY_API_KEY=votre-api-key
 CLOUDINARY_API_SECRET=votre-api-secret
 ```
+
+### Synchronisation automatique des identifiants
+
+L'application synchronise automatiquement les identifiants admin avec les variables d'environnement :
+- Lors de la première connexion, si aucun compte admin n'existe, il sera créé automatiquement
+- Si les identifiants dans les variables d'environnement changent, ils seront mis à jour automatiquement lors de la prochaine connexion
+- Plus besoin d'appeler manuellement l'API de seed pour créer le compte admin
 
 ### Initialisation de la base de données
 

@@ -23,6 +23,14 @@ export async function POST(request: NextRequest) {
     // Get admin credentials from environment variables
     const adminEmail = process.env.ADMIN_EMAIL || 'admin@loicmazagran.com';
     const adminPassword = process.env.ADMIN_PASSWORD || 'changeme123';
+    const adminName = process.env.ADMIN_NAME || 'Admin';
+
+    // Validate password meets minimum requirements (8 characters as per User model)
+    if (adminPassword.length < 8) {
+      return NextResponse.json({ 
+        error: 'ADMIN_PASSWORD must be at least 8 characters' 
+      }, { status: 400 });
+    }
 
     // Track admin user status
     let adminUserStatus: 'created' | 'updated' | 'unchanged' = 'unchanged';
@@ -35,18 +43,24 @@ export async function POST(request: NextRequest) {
       await User.create({
         email: adminEmail,
         password: adminPassword,
-        name: 'Loic Mazagran',
+        name: adminName,
         role: 'admin',
       });
       adminUserStatus = 'created';
       console.log('Admin user created');
     } else {
-      // Update existing admin user credentials if they differ or if force update is requested
+      // Check if email, name, or password needs to be updated
       const forceUpdate = body.forceUpdate === true;
-      const needsUpdate = existingUser.email !== adminEmail;
+      const emailNeedsUpdate = existingUser.email !== adminEmail;
+      const nameNeedsUpdate = existingUser.name !== adminName;
       
-      if (needsUpdate || forceUpdate) {
+      // Check if password is different by verifying against the env password
+      const passwordMatches = await existingUser.comparePassword(adminPassword);
+      const passwordNeedsUpdate = !passwordMatches;
+      
+      if (emailNeedsUpdate || nameNeedsUpdate || passwordNeedsUpdate || forceUpdate) {
         existingUser.email = adminEmail;
+        existingUser.name = adminName;
         existingUser.password = adminPassword;
         await existingUser.save();
         adminUserStatus = 'updated';

@@ -8,6 +8,75 @@ if (!process.env.NEXTAUTH_SECRET && process.env.NODE_ENV === 'production') {
   console.error('NEXTAUTH_SECRET is not set. Authentication will not work properly.');
 }
 
+// Cache to track if admin user has been ensured in this process instance
+let adminUserEnsured = false;
+
+/**
+ * Ensures the admin user exists in the database with the correct credentials
+ * from environment variables. This is called during authentication to
+ * automatically sync the admin user with environment variable settings.
+ * Uses a process-level cache to avoid checking on every authentication attempt.
+ */
+async function ensureAdminUser(): Promise<void> {
+  // Skip if already ensured in this process instance
+  if (adminUserEnsured) {
+    return;
+  }
+
+  const adminEmail = process.env.ADMIN_EMAIL;
+  const adminPassword = process.env.ADMIN_PASSWORD;
+  const adminName = process.env.ADMIN_NAME || 'Admin';
+
+  // If admin credentials are not configured in environment variables, skip
+  if (!adminEmail || !adminPassword) {
+    console.log('Admin credentials not configured in environment variables, skipping admin sync');
+    return;
+  }
+
+  // Validate password meets minimum requirements (8 characters as per User model)
+  if (adminPassword.length < 8) {
+    console.error('ADMIN_PASSWORD must be at least 8 characters');
+    return;
+  }
+
+  try {
+    // Check if any admin user exists (search by role to stay consistent with seed endpoint)
+    const existingAdmin = await User.findOne({ role: 'admin' }).select('+password');
+    
+    if (!existingAdmin) {
+      // Create new admin user with credentials from environment variables
+      await User.create({
+        email: adminEmail,
+        password: adminPassword,
+        name: adminName,
+        role: 'admin',
+      });
+      console.log('Admin user created from environment variables');
+      // Mark as ensured only after successful creation
+      adminUserEnsured = true;
+    } else {
+      // Check if email, password, or name needs to be updated
+      // comparePassword compares plain text password against bcrypt hash stored in DB
+      const emailNeedsUpdate = existingAdmin.email !== adminEmail;
+      const nameNeedsUpdate = existingAdmin.name !== adminName;
+      const passwordMatches = await existingAdmin.comparePassword(adminPassword);
+      
+      if (emailNeedsUpdate || nameNeedsUpdate || !passwordMatches) {
+        existingAdmin.email = adminEmail;
+        existingAdmin.name = adminName;
+        existingAdmin.password = adminPassword;
+        await existingAdmin.save();
+        console.log('Admin user credentials updated from environment variables');
+      }
+      // Mark as ensured after successful check/update
+      adminUserEnsured = true;
+    }
+  } catch (error) {
+    console.error('Error ensuring admin user:', error);
+    // Don't set adminUserEnsured to true on error - allow retry on next attempt
+  }
+}
+
 export const authOptions: AuthOptions = {
   providers: [
     CredentialsProvider({
@@ -23,6 +92,9 @@ export const authOptions: AuthOptions = {
 
         try {
           await dbConnect();
+
+          // Ensure admin user exists and is synced with environment variables
+          await ensureAdminUser();
 
           const user = await User.findOne({ email: credentials.email }).select('+password');
 
