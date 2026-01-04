@@ -1,14 +1,43 @@
 import { NextResponse } from 'next/server';
-// Import fallback data
-import videosData from '@/data/videos.json';
+import fs from 'fs';
+import path from 'path';
 
+const VIDEOS_FILE_PATH = path.join(process.cwd(), 'src', 'data', 'videos.json');
+
+/**
+ * GET - Get all videos for public display
+ * This route reads from the filesystem to ensure real-time synchronization
+ * with admin dashboard changes
+ */
 export async function GET() {
+  console.log('[API] GET /api/public/videos');
+  
   try {
-    // Return static JSON data
-    return NextResponse.json({ videos: videosData.videos });
+    // Read from filesystem to get latest data
+    const fileContent = fs.readFileSync(VIDEOS_FILE_PATH, 'utf-8');
+    const data = JSON.parse(fileContent);
+    
+    console.log('[API] ✓ Retrieved', data.videos?.length || 0, 'videos from filesystem');
+    return NextResponse.json({ videos: data.videos || [] });
   } catch (error) {
-    console.error('Error fetching videos:', error);
-    // Return static data as fallback
-    return NextResponse.json({ videos: videosData.videos });
+    console.error('[API] Error reading videos from filesystem:', error);
+    
+    // Provide specific error details
+    let errorMessage = 'Failed to fetch videos';
+    if (error instanceof Error && 'code' in error) {
+      const fsError = error as NodeJS.ErrnoException;
+      if (fsError.code === 'ENOENT') {
+        errorMessage = 'Videos data file not found';
+      } else if (fsError.code === 'EACCES') {
+        errorMessage = 'Permission denied accessing videos data';
+      }
+    } else if (error instanceof SyntaxError) {
+      errorMessage = 'Videos data file contains invalid JSON';
+    }
+    
+    return NextResponse.json(
+      { error: errorMessage, videos: [] },
+      { status: 500 }
+    );
   }
 }

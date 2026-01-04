@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { 
-  getProjects, 
   createProject, 
   updateProject, 
   deleteProject 

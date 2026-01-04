@@ -110,10 +110,13 @@ export function readData(): DatabaseData {
  * Write data to JSON file with lock
  */
 export async function writeData(data: DatabaseData): Promise<void> {
+  console.log('[JSON-DB] Writing data to:', DATA_FILE_PATH);
+  console.log('[JSON-DB] Projects count:', data.projects?.length || 0);
+  
   await acquireWriteLock();
   try {
     fs.writeFileSync(DATA_FILE_PATH, JSON.stringify(data, null, 2), 'utf-8');
-    console.log('[JSON-DB] ✓ Data written successfully');
+    console.log('[JSON-DB] ✓ Data written successfully to filesystem');
   } catch (error) {
     console.error('[JSON-DB] Error writing data file:', error);
     throw new Error('Failed to write data to file');
