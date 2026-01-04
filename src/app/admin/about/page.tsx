@@ -88,14 +88,26 @@ export default function AdminAboutPage() {
         body: JSON.stringify(data),
       });
 
+      const result = await res.json();
+      
       if (res.ok) {
         alert('Enregistré avec succès !');
       } else {
-        alert('Erreur lors de l\'enregistrement');
+        // Check if it's a read-only filesystem error
+        if (result.isReadOnly) {
+          alert(
+            '❌ Erreur: Système de fichiers en lecture seule\n\n' +
+            'Le système de fichiers est en lecture seule dans cet environnement (courant pour les déploiements serverless comme Vercel).\n\n' +
+            'Pour activer la persistance des données en production, vous devez configurer une base de données ou un service de stockage externe.\n\n' +
+            'Documentation: https://vercel.com/docs/storage'
+          );
+        } else {
+          alert(`Erreur lors de l'enregistrement: ${result.error || 'Erreur inconnue'}\n${result.details || ''}`);
+        }
       }
     } catch (error) {
       console.error('Error saving:', error);
-      alert('Une erreur est survenue');
+      alert('Une erreur est survenue lors de l\'enregistrement');
     } finally {
       setSaving(false);
     }

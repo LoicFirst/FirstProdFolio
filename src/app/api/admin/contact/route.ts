@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, handleApiError, logApiRequest } from '@/lib/api-helpers';
-import fs from 'fs';
+import { readJSONFile, writeJSONFile } from '@/lib/filesystem';
 import path from 'path';
 
 const CONTACT_FILE_PATH = path.join(process.cwd(), 'src', 'data', 'contact.json');
@@ -24,30 +24,12 @@ interface ContactData {
 
 // Helper to read contact from JSON file
 function readContact(): ContactData {
-  try {
-    const content = fs.readFileSync(CONTACT_FILE_PATH, 'utf-8');
-    return JSON.parse(content) as ContactData;
-  } catch (error) {
-    console.error('[API] Error reading contact file:', error);
-    if (error instanceof Error && 'code' in error) {
-      const fsError = error as NodeJS.ErrnoException;
-      if (fsError.code === 'ENOENT') {
-        throw new Error(`Contact file not found at ${CONTACT_FILE_PATH}`);
-      } else if (fsError.code === 'EACCES') {
-        throw new Error(`Permission denied reading contact file at ${CONTACT_FILE_PATH}`);
-      }
-    }
-    if (error instanceof SyntaxError) {
-      throw new Error(`Invalid JSON in contact file at ${CONTACT_FILE_PATH}`);
-    }
-    throw error;
-  }
+  return readJSONFile<ContactData>(CONTACT_FILE_PATH);
 }
 
 // Helper to write contact to JSON file
 function writeContact(data: ContactData): void {
-  fs.writeFileSync(CONTACT_FILE_PATH, JSON.stringify(data, null, 2), 'utf-8');
-  console.log('[API] ✓ Contact data written to filesystem');
+  writeJSONFile(CONTACT_FILE_PATH, data);
 }
 
 // GET contact data

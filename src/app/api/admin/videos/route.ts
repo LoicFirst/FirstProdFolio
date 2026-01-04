@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, handleApiError, logApiRequest } from '@/lib/api-helpers';
-import fs from 'fs';
+import { readJSONFile, writeJSONFile } from '@/lib/filesystem';
 import path from 'path';
 
 const VIDEOS_FILE_PATH = path.join(process.cwd(), 'src', 'data', 'videos.json');
@@ -22,30 +22,12 @@ interface VideosData {
 
 // Helper to read videos from JSON file
 function readVideos(): VideosData {
-  try {
-    const content = fs.readFileSync(VIDEOS_FILE_PATH, 'utf-8');
-    return JSON.parse(content) as VideosData;
-  } catch (error) {
-    console.error('[API] Error reading videos file:', error);
-    if (error instanceof Error && 'code' in error) {
-      const fsError = error as NodeJS.ErrnoException;
-      if (fsError.code === 'ENOENT') {
-        throw new Error(`Videos file not found at ${VIDEOS_FILE_PATH}`);
-      } else if (fsError.code === 'EACCES') {
-        throw new Error(`Permission denied reading videos file at ${VIDEOS_FILE_PATH}`);
-      }
-    }
-    if (error instanceof SyntaxError) {
-      throw new Error(`Invalid JSON in videos file at ${VIDEOS_FILE_PATH}`);
-    }
-    throw error;
-  }
+  return readJSONFile<VideosData>(VIDEOS_FILE_PATH);
 }
 
 // Helper to write videos to JSON file
 function writeVideos(data: VideosData): void {
-  fs.writeFileSync(VIDEOS_FILE_PATH, JSON.stringify(data, null, 2), 'utf-8');
-  console.log('[API] ✓ Videos data written to filesystem');
+  writeJSONFile(VIDEOS_FILE_PATH, data);
 }
 
 // GET all videos
