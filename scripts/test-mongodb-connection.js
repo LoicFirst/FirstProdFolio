@@ -118,14 +118,14 @@ function validateMongoDBUri(uri) {
     }
     
     const lowerPassword = password.toLowerCase();
-    const placeholderPatterns = [
-      'password', 'your_password', 'yourpassword', 'pass', 'pwd',
-      'changeme', 'change_me', 'temp', 'test', '123456'
+    const exactPlaceholderPatterns = [
+      'password', 'your_password', 'yourpassword', 'your-password',
+      'changeme', 'change_me', 'temp', 'test', '123456', '12345678',
+      'admin', 'root', 'demo'
     ];
     
-    if (placeholderPatterns.some(pattern => lowerPassword === pattern) ||
-        lowerPassword.startsWith('password') || 
-        lowerPassword.startsWith('your')) {
+    // Only reject if password matches common placeholders EXACTLY (case insensitive)
+    if (exactPlaceholderPatterns.includes(lowerPassword)) {
       return {
         isValid: false,
         error: 'Le mot de passe semble être un placeholder.'

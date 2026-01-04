@@ -97,26 +97,20 @@ export function validateMongoDBUri(uri: string): { isValid: boolean; error?: str
       };
     }
     
-    // Check for common placeholder patterns
+    // Check for common placeholder patterns (only exact matches to avoid false positives)
     const lowerPassword = password.toLowerCase();
-    const placeholderPatterns = [
-      'password', 'your_password', 'yourpassword', 'pass', 'pwd',
-      'changeme', 'change_me', 'temp', 'test', '123456'
+    const exactPlaceholderPatterns = [
+      'password', 'your_password', 'yourpassword', 'your-password',
+      'changeme', 'change_me', 'temp', 'test', '123456', '12345678',
+      'admin', 'root', 'demo'
     ];
     
-    // Check if password matches common placeholders exactly (case insensitive)
-    if (placeholderPatterns.some(pattern => lowerPassword === pattern)) {
+    // Only reject if password matches common placeholders EXACTLY (case insensitive)
+    // This avoids false positives with legitimate passwords that happen to contain these words
+    if (exactPlaceholderPatterns.includes(lowerPassword)) {
       return {
         isValid: false,
         error: 'Le mot de passe MongoDB semble être un placeholder. Remplacez-le par votre mot de passe réel MongoDB Atlas.'
-      };
-    }
-    
-    // Check if password is suspiciously simple (e.g., "password123", "yourpassword")
-    if (lowerPassword.startsWith('password') || lowerPassword.startsWith('your')) {
-      return {
-        isValid: false,
-        error: 'Le mot de passe MongoDB semble être un placeholder ou trop simple. Utilisez votre mot de passe réel MongoDB Atlas.'
       };
     }
     
