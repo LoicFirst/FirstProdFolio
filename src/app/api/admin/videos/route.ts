@@ -1,20 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, handleApiError, logApiRequest } from '@/lib/api-helpers';
-import videosData from '@/data/videos.json';
 import fs from 'fs';
 import path from 'path';
 
 const VIDEOS_FILE_PATH = path.join(process.cwd(), 'src', 'data', 'videos.json');
 
+interface Video {
+  id: string;
+  title: string;
+  description: string;
+  year?: number;
+  video_url: string;
+  thumbnail_url?: string;
+  duration?: string;
+  category?: string;
+}
+
+interface VideosData {
+  videos: Video[];
+}
+
 // Helper to read videos from JSON file
-function readVideos() {
+function readVideos(): VideosData {
   const content = fs.readFileSync(VIDEOS_FILE_PATH, 'utf-8');
-  return JSON.parse(content);
+  return JSON.parse(content) as VideosData;
 }
 
 // Helper to write videos to JSON file
-function writeVideos(data: typeof videosData) {
+function writeVideos(data: VideosData): void {
   fs.writeFileSync(VIDEOS_FILE_PATH, JSON.stringify(data, null, 2), 'utf-8');
+  console.log('[API] ✓ Videos data written to filesystem');
 }
 
 // GET all videos
@@ -84,7 +99,7 @@ export async function PUT(request: NextRequest) {
 
     console.log('[API] Updating video:', id);
 
-    const index = data.videos.findIndex((v: any) => v.id === id);
+    const index = data.videos.findIndex((v: Video) => v.id === id);
     if (index === -1) {
       console.error('[API] Video not found:', id);
       return NextResponse.json({ error: 'Video not found' }, { status: 404 });
@@ -120,7 +135,7 @@ export async function DELETE(request: NextRequest) {
     console.log('[API] Deleting video:', id);
 
     const initialLength = data.videos.length;
-    data.videos = data.videos.filter((v: any) => v.id !== id);
+    data.videos = data.videos.filter((v: Video) => v.id !== id);
 
     if (data.videos.length === initialLength) {
       console.error('[API] Video not found for deletion:', id);

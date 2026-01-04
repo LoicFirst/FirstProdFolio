@@ -1,20 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, handleApiError, logApiRequest } from '@/lib/api-helpers';
-import contactData from '@/data/contact.json';
 import fs from 'fs';
 import path from 'path';
 
 const CONTACT_FILE_PATH = path.join(process.cwd(), 'src', 'data', 'contact.json');
 
+interface ContactData {
+  contact?: {
+    email?: string;
+    phone?: string;
+    location?: string;
+  };
+  social?: Array<{
+    name: string;
+    url: string;
+    icon: string;
+  }>;
+  availability?: {
+    status: string;
+    message: string;
+  };
+}
+
 // Helper to read contact from JSON file
-function readContact() {
+function readContact(): ContactData {
   const content = fs.readFileSync(CONTACT_FILE_PATH, 'utf-8');
-  return JSON.parse(content);
+  return JSON.parse(content) as ContactData;
 }
 
 // Helper to write contact to JSON file
-function writeContact(data: typeof contactData) {
+function writeContact(data: ContactData): void {
   fs.writeFileSync(CONTACT_FILE_PATH, JSON.stringify(data, null, 2), 'utf-8');
+  console.log('[API] ✓ Contact data written to filesystem');
 }
 
 // GET contact data

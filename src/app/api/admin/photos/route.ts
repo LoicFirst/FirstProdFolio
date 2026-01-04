@@ -1,20 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, handleApiError, logApiRequest } from '@/lib/api-helpers';
-import photosData from '@/data/photos.json';
 import fs from 'fs';
 import path from 'path';
 
 const PHOTOS_FILE_PATH = path.join(process.cwd(), 'src', 'data', 'photos.json');
 
+interface Photo {
+  id: string;
+  title: string;
+  description: string;
+  year?: number;
+  image_url: string;
+  thumbnail_url?: string;
+  category?: string;
+  location?: string;
+}
+
+interface PhotosData {
+  photos: Photo[];
+}
+
 // Helper to read photos from JSON file
-function readPhotos() {
+function readPhotos(): PhotosData {
   const content = fs.readFileSync(PHOTOS_FILE_PATH, 'utf-8');
-  return JSON.parse(content);
+  return JSON.parse(content) as PhotosData;
 }
 
 // Helper to write photos to JSON file
-function writePhotos(data: typeof photosData) {
+function writePhotos(data: PhotosData): void {
   fs.writeFileSync(PHOTOS_FILE_PATH, JSON.stringify(data, null, 2), 'utf-8');
+  console.log('[API] ✓ Photos data written to filesystem');
 }
 
 // GET all photos
@@ -84,7 +99,7 @@ export async function PUT(request: NextRequest) {
 
     console.log('[API] Updating photo:', id);
 
-    const index = data.photos.findIndex((p: any) => p.id === id);
+    const index = data.photos.findIndex((p: Photo) => p.id === id);
     if (index === -1) {
       console.error('[API] Photo not found:', id);
       return NextResponse.json({ error: 'Photo not found' }, { status: 404 });
@@ -120,7 +135,7 @@ export async function DELETE(request: NextRequest) {
     console.log('[API] Deleting photo:', id);
 
     const initialLength = data.photos.length;
-    data.photos = data.photos.filter((p: any) => p.id !== id);
+    data.photos = data.photos.filter((p: Photo) => p.id !== id);
 
     if (data.photos.length === initialLength) {
       console.error('[API] Photo not found for deletion:', id);
