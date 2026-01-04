@@ -2,19 +2,21 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function AdminPage() {
   const router = useRouter();
-  const { status } = useSession();
+  const { isAuthenticated, isLoading } = useAuth();
 
   useEffect(() => {
-    if (status === 'authenticated') {
-      router.replace('/admin/dashboard');
-    } else if (status === 'unauthenticated') {
-      router.replace('/admin/login');
+    if (!isLoading) {
+      if (isAuthenticated) {
+        router.replace('/admin/dashboard');
+      } else {
+        router.replace('/admin/login');
+      }
     }
-  }, [status, router]);
+  }, [isAuthenticated, isLoading, router]);
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center">
