@@ -10,9 +10,11 @@ L'interface d'administration est accessible à l'adresse suivante :
 - **Local** : `http://localhost:3000/admin`
 
 ### Connexion
-Utilisez vos identifiants configurés lors du déploiement :
-- **Email** : Défini dans la variable d'environnement `ADMIN_EMAIL`
-- **Mot de passe** : Défini dans la variable d'environnement `ADMIN_PASSWORD`
+L'application utilise maintenant une authentification JWT simplifiée avec des identifiants stockés de manière sécurisée dans `data.json` :
+- **Email** : `loicmazagran2007@gmail.com`
+- **Mot de passe** : `CRyTDXCGhADE4`
+
+Le mot de passe est hashé avec bcrypt pour la sécurité.
 
 ## 📋 Fonctionnalités disponibles
 
@@ -23,25 +25,31 @@ Vue d'ensemble de votre portfolio avec :
 - Guide d'utilisation intégré
 
 ### 2. Gestion des Vidéos
-- **Ajouter** une nouvelle vidéo avec titre, description, URL YouTube/Vimeo, miniature, durée et catégorie
+- **Ajouter** une nouvelle vidéo avec titre, description, URL YouTube, miniature, durée et catégorie
 - **Modifier** les informations d'une vidéo existante
 - **Supprimer** une vidéo
 - **Publier/Dépublier** une vidéo (les vidéos non publiées n'apparaissent pas sur le site public)
 
 ### 3. Gestion des Photos
 - **Ajouter** une nouvelle photo avec titre, description, image, catégorie et lieu
-- **Télécharger** des images directement vers le cloud (Cloudinary)
+- **Télécharger** des images directement (stockées localement dans `/public/static/images` ou via Cloudinary)
 - **Modifier** les informations d'une photo existante
 - **Supprimer** une photo
 - **Publier/Dépublier** une photo
 
-### 4. Page À propos
+### 4. Gestion des Projets (Nouvelle fonctionnalité)
+- **Ajouter** un nouveau projet avec titre, description, vidéo YouTube, images et URL externe
+- **Modifier** les informations d'un projet existant
+- **Supprimer** un projet
+- Les projets sont accessibles publiquement via `/api/public/projects`
+
+### 5. Page À propos
 - **Profil** : Modifier votre nom, titre, biographie, photo, années d'expérience et localisation
 - **Compétences** : Ajouter/modifier/supprimer des catégories de compétences
 - **Logiciels** : Gérer la liste des logiciels maîtrisés avec leur niveau de maîtrise
 - **Récompenses** : Ajouter/modifier/supprimer vos distinctions et prix
 
-### 5. Informations de Contact
+### 6. Informations de Contact
 - **Contact** : Modifier votre email, téléphone et localisation
 - **Disponibilité** : Indiquer votre statut (disponible, occupé, non disponible)
 - **Réseaux sociaux** : Ajouter/modifier/supprimer vos liens vers Instagram, YouTube, Vimeo, LinkedIn, Twitter
@@ -49,8 +57,8 @@ Vue d'ensemble de votre portfolio avec :
 ## 🔄 Synchronisation avec le site public
 
 Les modifications effectuées dans l'interface d'administration sont **automatiquement synchronisées** avec le site public :
-- Les changements sont enregistrés en base de données
-- Le site public récupère les données depuis la base de données
+- Les changements sont enregistrés dans des fichiers JSON locaux
+- Le site public récupère les données depuis ces fichiers JSON
 - Aucune action manuelle n'est nécessaire
 
 ## ⚙️ Configuration technique
@@ -60,106 +68,63 @@ Les modifications effectuées dans l'interface d'administration sont **automatiq
 Créez un fichier `.env.local` avec les variables suivantes :
 
 ```env
-# Base de données MongoDB
-# Format recommandé par MongoDB Atlas (décembre 2024+)
-MONGODB_URI=mongodb+srv://steveduchan2007_db_user:fhXJuCrVc95T8Xh@cluster0.tvtrbmv.mongodb.net/?appName=Cluster0
+# JWT Secret pour l'authentification (générer avec: openssl rand -base64 32)
+JWT_SECRET=YOUR_GENERATED_SECRET_HERE
 
-# NextAuth.js (authentification)
-NEXTAUTH_URL=https://first-prod-folio.vercel.app
-NEXTAUTH_SECRET=v9j9sPqkmnJoQymkPVBWicfALfI5p/5Eu/Uk0eGAqpU=
-
-# Identifiants admin
-ADMIN_EMAIL=loicmazagran2007@gmail.com
-ADMIN_PASSWORD=jf5z243LuwKvt
-ADMIN_NAME=Loic Mazagran
-
-# Cloudinary (upload d'images)
+# Cloudinary (upload d'images) - Optionnel
 CLOUDINARY_CLOUD_NAME=votre-cloud-name
 CLOUDINARY_API_KEY=votre-api-key
 CLOUDINARY_API_SECRET=votre-api-secret
 ```
 
-### Synchronisation automatique des identifiants
+### Architecture de stockage des données
 
-L'application synchronise automatiquement les identifiants admin avec les variables d'environnement :
-- Lors de la première connexion, si aucun compte admin n'existe, il sera créé automatiquement
-- Si les identifiants dans les variables d'environnement changent, ils seront mis à jour automatiquement lors de la prochaine connexion
-- Plus besoin d'appeler manuellement l'API de seed pour créer le compte admin
+L'application utilise maintenant un système de fichiers JSON pour stocker toutes les données :
 
-### Initialisation de la base de données
+1. **`data.json`** : Contient les projets et les identifiants administrateur
+2. **`src/data/videos.json`** : Contient les vidéos du portfolio
+3. **`src/data/photos.json`** : Contient les photos du portfolio
+4. **`src/data/about.json`** : Contient les informations de la page "À propos"
+5. **`src/data/contact.json`** : Contient les informations de contact
 
-Lors du premier déploiement, vous pouvez initialiser la base de données avec les données existantes en utilisant l'API de seed :
-
-```bash
-curl -X POST https://votre-domaine/api/admin/seed \
-  -H "Content-Type: application/json" \
-  -d '{"secret": "votre-nextauth-secret"}'
-```
-
-Cela créera :
-- Un utilisateur admin avec les identifiants configurés
-- Les vidéos, photos et informations existantes depuis les fichiers JSON
+Tous les fichiers sont automatiquement mis à jour lors des modifications via l'interface admin.
 
 ### Mise à jour des identifiants admin
 
-Si vous avez besoin de mettre à jour les identifiants admin après le déploiement initial :
+Pour modifier le mot de passe administrateur :
 
-1. **Mettre à jour les variables d'environnement** sur Vercel :
-   - `ADMIN_EMAIL` : Votre nouvel email admin
-   - `ADMIN_PASSWORD` : Votre nouveau mot de passe admin
-
-2. **Forcer la mise à jour** en appelant l'API de seed avec l'option `forceUpdate` :
+1. Générer un nouveau hash bcrypt du mot de passe souhaité :
    ```bash
-   curl -X POST https://votre-domaine/api/admin/seed \
-     -H "Content-Type: application/json" \
-     -d '{"secret": "votre-nextauth-secret", "forceUpdate": true}'
+   node -e "const bcrypt = require('bcryptjs'); bcrypt.hash('VotreNouveauMotDePasse', 10, (err, hash) => { console.log(hash); });"
+   ```
+
+2. Mettre à jour le fichier `data.json` avec le nouveau hash :
+   ```json
+   {
+     "admin": {
+       "email": "loicmazagran2007@gmail.com",
+       "password": "NOUVEAU_HASH_ICI"
+     }
+   }
    ```
 
 ### Résolution des problèmes de connexion
 
-#### Erreur "Configuration"
-
-Si vous voyez l'erreur `?error=Configuration` sur la page de connexion, vérifiez que :
-1. La variable `NEXTAUTH_SECRET` est correctement définie sur Vercel
-2. La variable `NEXTAUTH_URL` correspond à votre URL de production (ex: `https://first-prod-folio.vercel.app`)
-3. La variable `MONGODB_URI` est correctement configurée et accessible
-
 #### Erreur "Email ou mot de passe incorrect"
 
-Si vous ne pouvez pas vous connecter avec les bons identifiants :
-1. **Vérifier les variables d'environnement** : Assurez-vous que `ADMIN_EMAIL` et `ADMIN_PASSWORD` sont correctement configurées
-2. **Mot de passe minimum** : Le mot de passe doit contenir au moins 8 caractères
-3. **Consulter les logs** : Vérifiez les logs de déploiement sur Vercel pour voir les messages détaillés :
+Si vous ne pouvez pas vous connecter :
+1. **Vérifier les identifiants** : Email `loicmazagran2007@gmail.com` et mot de passe `CRyTDXCGhADE4`
+2. **Consulter les logs** : Vérifiez les logs de déploiement sur Vercel pour voir les messages d'authentification :
    - `[AUTH]` : Messages d'authentification
-   - `[DB]` : Connexion à la base de données
+   - `[JWT]` : Génération et vérification des tokens
    - `[API]` : Opérations API
 
-#### Problèmes de connexion à la base de données
+#### Erreur "JWT_SECRET is not configured"
 
-Si vous voyez des erreurs liées à MongoDB :
-1. **Vérifier le format de MONGODB_URI** : 
-   - Format correct: `mongodb+srv://username:password@cluster.mongodb.net/?appName=ClusterName`
-   - Format ancien (peut causer des problèmes): `mongodb+srv://username:password@cluster.mongodb.net/database?retryWrites=true&w=majority`
-   - **IMPORTANT**: Ne pas utiliser de chevrons `< >` autour du mot de passe. Exemple INCORRECT: `mongodb+srv://user:<password>@...`
-   - Le système valide maintenant le format de l'URI avant de tenter la connexion
-2. **Erreurs de validation courantes**:
-   - "contains placeholder password": Remplacez `<password>` par votre mot de passe réel
-   - "must start with mongodb://": Vérifiez que l'URI commence correctement
-   - "credentials format is invalid": Format attendu `username:password@host`
-   - "missing the host/cluster address": Ajoutez l'adresse du cluster après `@`
-3. **Erreurs de connexion**:
-   - "authentication failed": Nom d'utilisateur ou mot de passe incorrect dans l'URI
-   - "host not found": Adresse du cluster incorrecte ou problème DNS
-   - "timed out": Problème réseau ou IP non autorisée dans MongoDB Atlas
-4. **Timeout de connexion** : Le système utilise un timeout de 10 secondes pour la connexion initiale
-5. **Whitelist IP** : Sur MongoDB Atlas, assurez-vous que l'IP de Vercel est autorisée (ou utilisez `0.0.0.0/0` pour autoriser toutes les IPs)
-
-#### Chargement lent ou timeout
-
-Si la page de connexion prend trop de temps :
-1. **Vérifier la connexion MongoDB** : Une connexion lente à la base de données peut causer des timeouts
-2. **Consulter les logs détaillés** : Les logs montrent maintenant chaque étape de l'authentification
-3. **Temps d'attente** : Le système a un timeout de 10s pour la connexion DB et 45s pour les opérations
+Si vous voyez cette erreur :
+1. **Vérifier JWT_SECRET** : Assurez-vous que la variable d'environnement `JWT_SECRET` est définie
+2. **Générer un nouveau secret** : Utilisez `openssl rand -base64 32` pour générer un secret sécurisé
+3. **Redémarrer l'application** : Après avoir ajouté la variable d'environnement
 
 #### Debugging avancé
 
@@ -234,3 +199,33 @@ En cas de problème ou question, consultez la documentation technique ou contact
 
 **v1.0.0**
 - Lancement initial du panneau d'administration
+
+## 🛡️ Sécurité (Mise à jour v3.0.0)
+
+### Bonnes pratiques
+1. **Mot de passe fort** : Le mot de passe par défaut doit être changé immédiatement après le déploiement
+2. **Secret JWT unique** : Générez un secret JWT unique avec `openssl rand -base64 32`
+3. **Ne pas commiter le .env** : Les fichiers .env.local sont automatiquement ignorés par git
+4. **Déconnexion** : Déconnectez-vous toujours après utilisation
+
+### Fonctionnalités de sécurité v3.0.0
+- Hachage des mots de passe avec bcrypt (10 rounds)
+- Tokens JWT avec expiration automatique (24h)
+- Protection des routes API par JWT Bearer tokens
+- Validation des données côté serveur
+- Validation stricte des URLs YouTube
+- Validation des types de fichiers pour les uploads
+- File locking pour éviter les race conditions
+- Vérification stricte des tokens JWT
+
+---
+
+### Changelog v3.0.0 (Janvier 2026)
+- 🚀 **Migration complète de MongoDB vers JSON file storage**
+- 🔐 **Remplacement de NextAuth par JWT authentication**
+- 📁 Nouveau système de gestion de projets avec API REST complète
+- 🖼️ Upload d'images local dans `/public/static/images`
+- ⚡ Simplification de l'architecture (suppression MongoDB/Mongoose/NextAuth)
+- 🔒 Amélioration de la sécurité JWT et validation stricte
+- 🔄 Synchronisation en temps réel via fichiers JSON
+- 🛡️ File locking pour éviter les conflits d'écriture
