@@ -19,6 +19,7 @@ import {
   FaTwitter,
 } from 'react-icons/fa';
 import { authenticatedFetch } from '@/lib/client-api-helpers';
+import { UI_ERROR_MESSAGES_FR } from '@/lib/error-messages';
 
 interface SocialLink {
   name: string;
@@ -103,23 +104,18 @@ export default function AdminContactPage() {
       const result = await res.json();
       
       if (res.ok) {
-        alert('Enregistré avec succès !');
+        alert(UI_ERROR_MESSAGES_FR.SAVE_SUCCESS);
       } else {
         // Check if it's a read-only filesystem error
         if (result.isReadOnly) {
-          alert(
-            '❌ Erreur: Système de fichiers en lecture seule\n\n' +
-            'Le système de fichiers est en lecture seule dans cet environnement (courant pour les déploiements serverless comme Vercel).\n\n' +
-            'Pour activer la persistance des données en production, vous devez configurer une base de données ou un service de stockage externe.\n\n' +
-            'Documentation: https://vercel.com/docs/storage'
-          );
+          alert(UI_ERROR_MESSAGES_FR.READ_ONLY_FILESYSTEM);
         } else {
-          alert(`Erreur lors de l'enregistrement: ${result.error || 'Erreur inconnue'}\n${result.details || ''}`);
+          alert(UI_ERROR_MESSAGES_FR.SAVE_ERROR(result.error || 'Erreur inconnue', result.details || ''));
         }
       }
     } catch (error) {
       console.error('Error saving:', error);
-      alert('Une erreur est survenue lors de l\'enregistrement');
+      alert(UI_ERROR_MESSAGES_FR.GENERAL_ERROR);
     } finally {
       setSaving(false);
     }

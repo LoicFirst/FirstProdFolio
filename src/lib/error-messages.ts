@@ -46,3 +46,22 @@ export const API_ERROR_MESSAGES = {
     error: 'Authentication check failed',
   },
 };
+
+/**
+ * French error messages for UI
+ * Centralized to avoid duplication across admin pages
+ */
+export const UI_ERROR_MESSAGES_FR = {
+  READ_ONLY_FILESYSTEM:
+    '❌ Erreur: Système de fichiers en lecture seule\n\n' +
+    'Le système de fichiers est en lecture seule dans cet environnement (courant pour les déploiements serverless comme Vercel).\n\n' +
+    'Pour activer la persistance des données en production, vous devez configurer une base de données ou un service de stockage externe.\n\n' +
+    'Documentation: https://vercel.com/docs/storage',
+  
+  SAVE_ERROR: (error: string, details?: string) =>
+    `Erreur lors de l'enregistrement: ${error}\n${details || ''}`,
+  
+  SAVE_SUCCESS: 'Enregistré avec succès !',
+  
+  GENERAL_ERROR: 'Une erreur est survenue lors de l\'enregistrement',
+};

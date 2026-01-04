@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateRequest } from '@/lib/auth/jwt';
-import type { FilesystemError } from '@/lib/filesystem';
+import { isFilesystemError, type FilesystemError } from '@/lib/filesystem';
 import { API_ERROR_MESSAGES } from '@/lib/error-messages';
 
 /**
@@ -68,57 +68,60 @@ export function handleApiError(error: unknown, context: string): NextResponse {
     }
     
     // Check for filesystem errors (read-only environment)
-    const fsError = error as FilesystemError;
-    if (fsError.isReadOnly || fsError.code === 'EROFS') {
-      console.error(`[API] ❌ READ-ONLY FILESYSTEM DETECTED`);
-      console.error(`[API] This is common in serverless environments like Vercel`);
-      console.error(`[API] Help:`, fsError.helpMessage);
-      return NextResponse.json(
-        { 
-          ...API_ERROR_MESSAGES.READ_ONLY_FILESYSTEM,
-          isReadOnly: true
-        },
-        { status: 500 }
-      );
-    }
-    
-    // Check for file not found errors
-    if (fsError.code === 'ENOENT') {
-      console.error(`[API] ❌ FILE NOT FOUND`);
-      return NextResponse.json(
-        { 
-          ...API_ERROR_MESSAGES.FILE_NOT_FOUND,
-          details: fsError.helpMessage || API_ERROR_MESSAGES.FILE_NOT_FOUND.details,
-          code: 'ENOENT'
-        },
-        { status: 500 }
-      );
-    }
-    
-    // Check for permission errors
-    if (fsError.code === 'EACCES') {
-      console.error(`[API] ❌ PERMISSION DENIED`);
-      return NextResponse.json(
-        { 
-          ...API_ERROR_MESSAGES.PERMISSION_DENIED,
-          details: fsError.helpMessage || API_ERROR_MESSAGES.PERMISSION_DENIED.details,
-          code: 'EACCES'
-        },
-        { status: 500 }
-      );
-    }
-    
-    // Check for invalid JSON
-    if (fsError.code === 'INVALID_JSON') {
-      console.error(`[API] ❌ INVALID JSON`);
-      return NextResponse.json(
-        { 
-          ...API_ERROR_MESSAGES.INVALID_JSON,
-          details: fsError.helpMessage || API_ERROR_MESSAGES.INVALID_JSON.details,
-          code: 'INVALID_JSON'
-        },
-        { status: 500 }
-      );
+    if (isFilesystemError(error)) {
+      const fsError = error as FilesystemError;
+      
+      if (fsError.isReadOnly || fsError.code === 'EROFS') {
+        console.error(`[API] ❌ READ-ONLY FILESYSTEM DETECTED`);
+        console.error(`[API] This is common in serverless environments like Vercel`);
+        console.error(`[API] Help:`, fsError.helpMessage);
+        return NextResponse.json(
+          { 
+            ...API_ERROR_MESSAGES.READ_ONLY_FILESYSTEM,
+            isReadOnly: true
+          },
+          { status: 500 }
+        );
+      }
+      
+      // Check for file not found errors
+      if (fsError.code === 'ENOENT') {
+        console.error(`[API] ❌ FILE NOT FOUND`);
+        return NextResponse.json(
+          { 
+            ...API_ERROR_MESSAGES.FILE_NOT_FOUND,
+            details: fsError.helpMessage || API_ERROR_MESSAGES.FILE_NOT_FOUND.details,
+            code: 'ENOENT'
+          },
+          { status: 500 }
+        );
+      }
+      
+      // Check for permission errors
+      if (fsError.code === 'EACCES') {
+        console.error(`[API] ❌ PERMISSION DENIED`);
+        return NextResponse.json(
+          { 
+            ...API_ERROR_MESSAGES.PERMISSION_DENIED,
+            details: fsError.helpMessage || API_ERROR_MESSAGES.PERMISSION_DENIED.details,
+            code: 'EACCES'
+          },
+          { status: 500 }
+        );
+      }
+      
+      // Check for invalid JSON
+      if (fsError.code === 'INVALID_JSON') {
+        console.error(`[API] ❌ INVALID JSON`);
+        return NextResponse.json(
+          { 
+            ...API_ERROR_MESSAGES.INVALID_JSON,
+            details: fsError.helpMessage || API_ERROR_MESSAGES.INVALID_JSON.details,
+            code: 'INVALID_JSON'
+          },
+          { status: 500 }
+        );
+      }
     }
     
     // Check for specific error types (legacy MongoDB errors, kept for compatibility)
