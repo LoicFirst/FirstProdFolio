@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateRequest } from '@/lib/auth/jwt';
 import type { FilesystemError } from '@/lib/filesystem';
+import { API_ERROR_MESSAGES } from '@/lib/error-messages';
 
 /**
  * Helper to check authentication for API routes using JWT
@@ -17,7 +18,7 @@ export async function requireAuth(request?: NextRequest) {
     console.error('[API] Unauthorized - No request object provided for JWT authentication');
     return {
       error: NextResponse.json(
-        { error: 'Unauthorized - Please provide authentication token' },
+        API_ERROR_MESSAGES.UNAUTHORIZED,
         { status: 401 }
       ),
       session: null,
@@ -44,7 +45,7 @@ export async function requireAuth(request?: NextRequest) {
     console.error('[API] Error checking authentication:', error);
     return {
       error: NextResponse.json(
-        { error: 'Authentication check failed' },
+        API_ERROR_MESSAGES.AUTH_CHECK_FAILED,
         { status: 500 }
       ),
       session: null,
@@ -74,9 +75,7 @@ export function handleApiError(error: unknown, context: string): NextResponse {
       console.error(`[API] Help:`, fsError.helpMessage);
       return NextResponse.json(
         { 
-          error: 'Cannot save data: Filesystem is read-only',
-          details: 'The filesystem is read-only in this environment (common in serverless deployments like Vercel). To enable data persistence in production, you need to configure a database or external storage service.',
-          helpUrl: 'https://vercel.com/docs/storage',
+          ...API_ERROR_MESSAGES.READ_ONLY_FILESYSTEM,
           isReadOnly: true
         },
         { status: 500 }
@@ -88,8 +87,8 @@ export function handleApiError(error: unknown, context: string): NextResponse {
       console.error(`[API] ❌ FILE NOT FOUND`);
       return NextResponse.json(
         { 
-          error: 'Data file not found',
-          details: fsError.helpMessage || 'Required data file is missing',
+          ...API_ERROR_MESSAGES.FILE_NOT_FOUND,
+          details: fsError.helpMessage || API_ERROR_MESSAGES.FILE_NOT_FOUND.details,
           code: 'ENOENT'
         },
         { status: 500 }
@@ -101,8 +100,8 @@ export function handleApiError(error: unknown, context: string): NextResponse {
       console.error(`[API] ❌ PERMISSION DENIED`);
       return NextResponse.json(
         { 
-          error: 'Permission denied',
-          details: fsError.helpMessage || 'Application does not have permission to access the file',
+          ...API_ERROR_MESSAGES.PERMISSION_DENIED,
+          details: fsError.helpMessage || API_ERROR_MESSAGES.PERMISSION_DENIED.details,
           code: 'EACCES'
         },
         { status: 500 }
@@ -114,8 +113,8 @@ export function handleApiError(error: unknown, context: string): NextResponse {
       console.error(`[API] ❌ INVALID JSON`);
       return NextResponse.json(
         { 
-          error: 'Invalid JSON in data file',
-          details: fsError.helpMessage || 'The data file contains invalid JSON syntax',
+          ...API_ERROR_MESSAGES.INVALID_JSON,
+          details: fsError.helpMessage || API_ERROR_MESSAGES.INVALID_JSON.details,
           code: 'INVALID_JSON'
         },
         { status: 500 }
@@ -125,28 +124,28 @@ export function handleApiError(error: unknown, context: string): NextResponse {
     // Check for specific error types (legacy MongoDB errors, kept for compatibility)
     if (error.message.includes('Cast to ObjectId failed')) {
       return NextResponse.json(
-        { error: 'Invalid ID format' },
+        API_ERROR_MESSAGES.INVALID_ID,
         { status: 400 }
       );
     }
     
     if (error.message.includes('duplicate key')) {
       return NextResponse.json(
-        { error: 'Resource already exists' },
+        API_ERROR_MESSAGES.RESOURCE_EXISTS,
         { status: 409 }
       );
     }
     
     if (error.message.includes('validation failed')) {
       return NextResponse.json(
-        { error: 'Validation error', details: error.message },
+        { ...API_ERROR_MESSAGES.VALIDATION_FAILED, details: error.message },
         { status: 400 }
       );
     }
   }
   
   return NextResponse.json(
-    { error: 'Internal server error', context },
+    { ...API_ERROR_MESSAGES.INTERNAL_ERROR, context },
     { status: 500 }
   );
 }

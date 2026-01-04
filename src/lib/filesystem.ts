@@ -12,18 +12,52 @@ export interface FilesystemError extends Error {
   helpMessage?: string;
 }
 
+// Centralized error messages
+const ERROR_MESSAGES = {
+  READ_ONLY_FILESYSTEM: 
+    'The filesystem is read-only (common in serverless environments like Vercel). ' +
+    'To persist data in production, you need to use a database or external storage service. ' +
+    'Local development works fine, but production deployments require persistent storage.',
+  PRODUCTION_STORAGE_NEEDED:
+    'The filesystem is read-only (common in serverless environments). ' +
+    'You need to use a database or external storage for production deployments.',
+  MISSING_FILE: 'Please ensure the file is present in your deployment.',
+  INVALID_JSON: 'The file contains invalid JSON syntax. Please check for missing commas, quotes, or brackets.',
+  PERMISSION_DENIED: 'The application does not have permission to access this file or directory.',
+  DIRECTORY_NOT_FOUND: 'The parent directory does not exist. Please ensure the directory structure is correct.',
+};
+
+// Cache writability status to avoid repeated checks
+let cachedWritabilityStatus: { [path: string]: { writable: boolean; timestamp: number } } = {};
+const CACHE_DURATION_MS = 60000; // Cache for 1 minute
+
 /**
  * Check if the filesystem is writable
  * Returns true if we can write to the given directory, false otherwise
+ * Results are cached for 1 minute to avoid repeated disk I/O
  */
 export function isFilesystemWritable(testPath: string = process.cwd()): boolean {
+  // Check cache first
+  const cached = cachedWritabilityStatus[testPath];
+  const now = Date.now();
+  if (cached && (now - cached.timestamp) < CACHE_DURATION_MS) {
+    return cached.writable;
+  }
+  
   try {
-    const testFile = path.join(testPath, '.write-test-' + Date.now());
+    // Use process.pid + timestamp + random for better uniqueness
+    const testFile = path.join(testPath, `.write-test-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}`);
     fs.writeFileSync(testFile, 'test', 'utf-8');
     fs.unlinkSync(testFile);
+    
+    // Cache the result
+    cachedWritabilityStatus[testPath] = { writable: true, timestamp: now };
     return true;
   } catch (error) {
     console.warn('[FILESYSTEM] Filesystem is read-only:', testPath);
+    
+    // Cache the result
+    cachedWritabilityStatus[testPath] = { writable: false, timestamp: now };
     return false;
   }
 }
@@ -39,7 +73,7 @@ export function readJSONFile<T>(filePath: string): T {
     if (!fs.existsSync(filePath)) {
       const error: FilesystemError = new Error(`File not found: ${filePath}`);
       error.code = 'ENOENT';
-      error.helpMessage = `The file ${path.basename(filePath)} does not exist. Please ensure it is present in your deployment.`;
+      error.helpMessage = `The file ${path.basename(filePath)} does not exist. ${ERROR_MESSAGES.MISSING_FILE}`;
       throw error;
     }
     
@@ -53,7 +87,7 @@ export function readJSONFile<T>(filePath: string): T {
     if (error instanceof SyntaxError) {
       const fsError: FilesystemError = new Error(`Invalid JSON in file: ${filePath}`);
       fsError.code = 'INVALID_JSON';
-      fsError.helpMessage = 'The file contains invalid JSON syntax. Please check for missing commas, quotes, or brackets.';
+      fsError.helpMessage = ERROR_MESSAGES.INVALID_JSON;
       console.error('[FILESYSTEM] ❌ JSON parsing error:', fsError.message);
       throw fsError;
     }
@@ -63,7 +97,7 @@ export function readJSONFile<T>(filePath: string): T {
       if (nodeError.code === 'EACCES') {
         const fsError: FilesystemError = new Error(`Permission denied reading file: ${filePath}`);
         fsError.code = 'EACCES';
-        fsError.helpMessage = 'The application does not have permission to read this file.';
+        fsError.helpMessage = ERROR_MESSAGES.PERMISSION_DENIED;
         console.error('[FILESYSTEM] ❌ Permission error:', fsError.message);
         throw fsError;
       }
@@ -77,6 +111,7 @@ export function readJSONFile<T>(filePath: string): T {
 /**
  * Safely write a JSON file with proper error handling
  * Includes detection of read-only filesystem (common in serverless environments)
+ * Note: Writability is checked and cached to minimize disk I/O
  */
 export function writeJSONFile<T>(filePath: string, data: T): void {
   console.log('[FILESYSTEM] Writing file:', filePath);
@@ -84,15 +119,12 @@ export function writeJSONFile<T>(filePath: string, data: T): void {
   try {
     const dir = path.dirname(filePath);
     
-    // Check if directory is writable first
+    // Check if directory is writable (cached)
     if (!isFilesystemWritable(dir)) {
       const error: FilesystemError = new Error('Filesystem is read-only');
       error.code = 'EROFS';
       error.isReadOnly = true;
-      error.helpMessage = 
-        'The filesystem is read-only (common in serverless environments like Vercel). ' +
-        'To persist data in production, you need to use a database or external storage service. ' +
-        'Local development works fine, but production deployments require persistent storage.';
+      error.helpMessage = ERROR_MESSAGES.READ_ONLY_FILESYSTEM;
       console.error('[FILESYSTEM] ❌ Read-only filesystem error');
       throw error;
     }
@@ -114,7 +146,7 @@ export function writeJSONFile<T>(filePath: string, data: T): void {
       if (nodeError.code === 'EACCES') {
         const fsError: FilesystemError = new Error(`Permission denied writing to file: ${filePath}`);
         fsError.code = 'EACCES';
-        fsError.helpMessage = 'The application does not have permission to write to this file or directory.';
+        fsError.helpMessage = ERROR_MESSAGES.PERMISSION_DENIED;
         console.error('[FILESYSTEM] ❌ Permission error:', fsError.message);
         throw fsError;
       }
@@ -123,9 +155,7 @@ export function writeJSONFile<T>(filePath: string, data: T): void {
         const fsError: FilesystemError = new Error('Filesystem is read-only');
         fsError.code = 'EROFS';
         fsError.isReadOnly = true;
-        fsError.helpMessage = 
-          'The filesystem is read-only (common in serverless environments). ' +
-          'You need to use a database or external storage for production deployments.';
+        fsError.helpMessage = ERROR_MESSAGES.PRODUCTION_STORAGE_NEEDED;
         console.error('[FILESYSTEM] ❌ Read-only filesystem error');
         throw fsError;
       }
@@ -133,7 +163,7 @@ export function writeJSONFile<T>(filePath: string, data: T): void {
       if (nodeError.code === 'ENOENT') {
         const fsError: FilesystemError = new Error(`Directory not found: ${path.dirname(filePath)}`);
         fsError.code = 'ENOENT';
-        fsError.helpMessage = 'The parent directory does not exist. Please ensure the directory structure is correct.';
+        fsError.helpMessage = ERROR_MESSAGES.DIRECTORY_NOT_FOUND;
         console.error('[FILESYSTEM] ❌ Directory not found:', fsError.message);
         throw fsError;
       }
