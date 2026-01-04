@@ -15,6 +15,8 @@ import {
   HiX,
   HiLogout,
   HiExternalLink,
+  HiChatAlt2,
+  HiCog,
 } from 'react-icons/hi';
 import { cn } from '@/lib/utils';
 
@@ -22,8 +24,10 @@ const sidebarLinks = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: HiHome },
   { href: '/admin/videos', label: 'Vidéos', icon: HiVideoCamera },
   { href: '/admin/photos', label: 'Photos', icon: HiPhotograph },
+  { href: '/admin/reviews', label: 'Avis Clients', icon: HiChatAlt2 },
   { href: '/admin/about', label: 'À propos', icon: HiUser },
   { href: '/admin/contact', label: 'Contact', icon: HiMail },
+  { href: '/admin/settings', label: 'Paramètres', icon: HiCog },
 ];
 
 export default function AdminSidebar() {

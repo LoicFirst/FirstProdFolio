@@ -1,5 +1,5 @@
 import { MongoClient, Db, Collection, Document } from 'mongodb';
-import { AboutDocument, ContactDocument, PhotoDocument, VideoDocument } from './types';
+import { AboutDocument, ContactDocument, PhotoDocument, VideoDocument, ReviewDocument, SettingsDocument } from './types';
 
 /**
  * MongoDB connection utility for portfolio data storage
@@ -31,6 +31,8 @@ export const COLLECTIONS = {
   PHOTOS: 'photos',
   VIDEOS: 'videos',
   CONTACT: 'contact',
+  REVIEWS: 'reviews',
+  SETTINGS: 'settings',
 } as const;
 
 // Global connection cache for serverless environments
@@ -108,6 +110,20 @@ export async function getVideosCollection() {
  */
 export async function getContactCollection() {
   return getCollection<ContactDocument>(COLLECTIONS.CONTACT);
+}
+
+/**
+ * Get the reviews collection
+ */
+export async function getReviewsCollection() {
+  return getCollection<ReviewDocument>(COLLECTIONS.REVIEWS);
+}
+
+/**
+ * Get the settings collection
+ */
+export async function getSettingsCollection() {
+  return getCollection<SettingsDocument>(COLLECTIONS.SETTINGS);
 }
 
 /**

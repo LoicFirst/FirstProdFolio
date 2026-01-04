@@ -91,3 +91,26 @@ export interface ContactData {
     message: string;
   };
 }
+
+export type ReviewStatus = 'pending' | 'approved' | 'rejected';
+
+export interface Review {
+  id: string;
+  name: string;
+  profession: string;
+  photo_url?: string;
+  review_text: string;
+  rating?: number;
+  status: ReviewStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ReviewsData {
+  reviews: Review[];
+}
+
+export interface SiteSettings {
+  lightWaveEffect: boolean;
+  reviewsEnabled: boolean;
+}

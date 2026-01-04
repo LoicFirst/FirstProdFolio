@@ -12,6 +12,7 @@ const navLinks = [
   { href: '/videos', label: 'Vidéos' },
   { href: '/photos', label: 'Photos' },
   { href: '/about', label: 'À propos' },
+  { href: '/reviews', label: 'Avis' },
   { href: '/contact', label: 'Contact' },
 ];
 

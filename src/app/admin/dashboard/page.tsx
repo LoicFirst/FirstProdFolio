@@ -10,16 +10,20 @@ import {
   HiMail,
   HiArrowRight,
   HiRefresh,
+  HiChatAlt2,
+  HiCog,
 } from 'react-icons/hi';
 import { authenticatedFetch } from '@/lib/client-api-helpers';
 
 interface Stats {
   videos: number;
   photos: number;
+  pendingReviews: number;
+  totalReviews: number;
 }
 
 export default function AdminDashboardPage() {
-  const [stats, setStats] = useState<Stats>({ videos: 0, photos: 0 });
+  const [stats, setStats] = useState<Stats>({ videos: 0, photos: 0, pendingReviews: 0, totalReviews: 0 });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -29,17 +33,21 @@ export default function AdminDashboardPage() {
   const fetchStats = async () => {
     try {
       setLoading(true);
-      const [videosRes, photosRes] = await Promise.all([
+      const [videosRes, photosRes, reviewsRes] = await Promise.all([
         authenticatedFetch('/api/admin/videos'),
         authenticatedFetch('/api/admin/photos'),
+        authenticatedFetch('/api/admin/reviews?limit=1'),
       ]);
 
       const videosData = await videosRes.json();
       const photosData = await photosRes.json();
+      const reviewsData = await reviewsRes.json();
 
       setStats({
         videos: videosData.videos?.length || 0,
         photos: photosData.photos?.length || 0,
+        pendingReviews: reviewsData.stats?.pending || 0,
+        totalReviews: reviewsData.stats?.total || 0,
       });
     } catch (error) {
       console.error('Error fetching stats:', error);
@@ -64,6 +72,13 @@ export default function AdminDashboardPage() {
       description: `${stats.photos} photos`,
     },
     {
+      href: '/admin/reviews',
+      label: 'Avis clients',
+      icon: HiChatAlt2,
+      color: stats.pendingReviews > 0 ? 'bg-yellow-500/10 text-yellow-500' : 'bg-cyan-500/10 text-cyan-500',
+      description: stats.pendingReviews > 0 ? `${stats.pendingReviews} en attente` : `${stats.totalReviews} avis`,
+    },
+    {
       href: '/admin/about',
       label: 'Modifier le profil',
       icon: HiUser,
@@ -76,6 +91,13 @@ export default function AdminDashboardPage() {
       icon: HiMail,
       color: 'bg-orange-500/10 text-orange-500',
       description: 'Email, téléphone, réseaux',
+    },
+    {
+      href: '/admin/settings',
+      label: 'Paramètres',
+      icon: HiCog,
+      color: 'bg-gray-500/10 text-gray-400',
+      description: 'Effets, options du site',
     },
   ];
 
@@ -142,8 +164,10 @@ export default function AdminDashboardPage() {
           <ul className="list-disc list-inside space-y-2 ml-4">
             <li><strong className="text-white">Vidéos :</strong> Ajoutez, modifiez ou supprimez vos vidéos et courts-métrages.</li>
             <li><strong className="text-white">Photos :</strong> Gérez votre galerie de photographies.</li>
+            <li><strong className="text-white">Avis clients :</strong> Consultez, approuvez ou rejetez les avis soumis par vos clients.</li>
             <li><strong className="text-white">À propos :</strong> Mettez à jour votre bio, compétences et récompenses.</li>
             <li><strong className="text-white">Contact :</strong> Modifiez vos informations de contact et liens vers les réseaux sociaux.</li>
+            <li><strong className="text-white">Paramètres :</strong> Configurez les options du site comme l&apos;effet de vague lumineuse.</li>
           </ul>
           <p className="text-sm text-gray-500 mt-4">
             Les modifications sont automatiquement synchronisées avec votre site public.
