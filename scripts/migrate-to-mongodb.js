@@ -16,11 +16,16 @@ const { MongoClient } = require('mongodb');
 const fs = require('fs');
 const path = require('path');
 
-// Load environment variables
-// First try .env.local (for local development), then fall back to .env
-require('dotenv').config({ path: '.env.local' });
-if (!process.env.MONGODB_URI) {
-  require('dotenv').config(); // Falls back to .env
+// Try to load environment variables from .env files
+try {
+  const dotenv = require('dotenv');
+  dotenv.config({ path: '.env.local' });
+  if (!process.env.MONGODB_URI) {
+    dotenv.config(); // Falls back to .env
+  }
+} catch (error) {
+  // dotenv not installed, will use process.env directly
+  // This is fine for production environments where env vars are set directly
 }
 
 const MONGODB_URI = process.env.MONGODB_URI;
