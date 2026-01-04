@@ -1,12 +1,12 @@
 'use client';
 
-import { SessionProvider, useSession } from 'next-auth/react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
+import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import AdminSidebar from '@/components/admin/AdminSidebar';
 
 function AdminLayoutContent({ children }: { children: React.ReactNode }) {
-  const { data: session, status } = useSession();
+  const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -15,13 +15,13 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     if (pathname === '/admin/login') return;
 
     // Redirect to login if not authenticated
-    if (status === 'unauthenticated') {
+    if (!isLoading && !isAuthenticated) {
       router.push('/admin/login');
     }
-  }, [status, router, pathname]);
+  }, [isAuthenticated, isLoading, router, pathname]);
 
   // Show loading state while checking session
-  if (status === 'loading') {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
@@ -38,7 +38,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   }
 
   // Show nothing if not authenticated (will redirect)
-  if (!session) {
+  if (!isAuthenticated) {
     return null;
   }
 
@@ -58,8 +58,8 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <SessionProvider>
+    <AuthProvider>
       <AdminLayoutContent>{children}</AdminLayoutContent>
-    </SessionProvider>
+    </AuthProvider>
   );
 }
