@@ -84,10 +84,9 @@ export function getSettingsCollection() {
 export function getPhotosCollection() {
   return {
     async find(filter?: any) {
+      const photos = await photosOperations.find();
       return {
-        async toArray() {
-          return photosOperations.find();
-        },
+        toArray: async () => photos,
       };
     },
     async findOne(filter: { id: string }) {
@@ -111,10 +110,9 @@ export function getPhotosCollection() {
 export function getVideosCollection() {
   return {
     async find(filter?: any) {
+      const videos = await videosOperations.find();
       return {
-        async toArray() {
-          return videosOperations.find();
-        },
+        toArray: async () => videos,
       };
     },
     async findOne(filter: { id: string }) {
@@ -138,10 +136,9 @@ export function getVideosCollection() {
 export function getReviewsCollection() {
   return {
     async find(filter?: any) {
+      const reviews = await reviewsOperations.find(filter);
       return {
-        async toArray() {
-          return reviewsOperations.find(filter);
-        },
+        toArray: async () => reviews,
       };
     },
     async findOne(filter: { id: string }) {

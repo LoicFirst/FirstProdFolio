@@ -25,22 +25,25 @@ export async function GET(request: NextRequest) {
       );
     }
     
+    const collection = getReviewsCollection();
+    
+    // Only get approved reviews for public display
+    const cursor = await collection.find({ status: 'approved' });
+    const allReviews = await cursor.toArray();
+    
     // Get pagination parameters
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1', 10);
     const limit = parseInt(searchParams.get('limit') || '10', 10);
     const skip = (page - 1) * limit;
     
-    const collection = getReviewsCollection();
+    // Sort by created_at descending and paginate
+    const sortedReviews = allReviews.sort((a, b) => {
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
     
-    // Only get approved reviews for public display
-    const totalCount = await collection.countDocuments({ status: 'approved' });
-    const reviews = await collection
-      .find({ status: 'approved' })
-      .sort({ created_at: -1 })
-      .skip(skip)
-      .limit(limit)
-      .toArray();
+    const totalCount = sortedReviews.length;
+    const reviews = sortedReviews.slice(skip, skip + limit);
     
     // Remove database _id field from results
     const cleanReviews = reviews.map(({ _id, ...review }) => review);

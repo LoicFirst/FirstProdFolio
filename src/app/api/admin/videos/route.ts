@@ -12,7 +12,8 @@ export async function GET(request: NextRequest) {
     if (error) return error;
 
     const collection = getVideosCollection();
-    const videos = await collection.find({}).toArray();
+    const cursor = await collection.find({});
+    const videos = await cursor.toArray();
     
     // Remove database _id field from results
     const cleanVideos = videos.map(({ _id, ...video }) => video);
@@ -86,7 +87,7 @@ export async function PUT(request: NextRequest) {
       { $set: { ...updateData, id } }
     );
 
-    if (result.matchedCount === 0) {
+    if (result.modifiedCount === 0) {
       console.error('[API] Video not found:', id);
       return NextResponse.json({ error: 'Video not found' }, { status: 404 });
     }

@@ -11,7 +11,8 @@ export async function GET() {
   
   try {
     const collection = getPhotosCollection();
-    const photos = await collection.find({}).toArray();
+    const cursor = await collection.find({});
+    const photos = await cursor.toArray();
     
     // Remove database _id field from results
     const cleanPhotos = photos.map(({ _id, ...photo }) => photo);

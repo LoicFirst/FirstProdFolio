@@ -21,7 +21,8 @@ export async function GET(request: NextRequest) {
       ? { status: status as 'pending' | 'approved' | 'rejected' }
       : undefined;
     
-    const allReviews = await collection.find(filter).toArray();
+    const cursor = await collection.find(filter);
+    const allReviews = await cursor.toArray();
     
     // Remove database _id field from results
     const cleanReviews = allReviews.map(({ _id, ...review }) => review);

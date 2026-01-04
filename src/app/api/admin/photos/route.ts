@@ -12,7 +12,8 @@ export async function GET(request: NextRequest) {
     if (error) return error;
 
     const collection = getPhotosCollection();
-    const photos = await collection.find({}).toArray();
+    const cursor = await collection.find({});
+    const photos = await cursor.toArray();
     
     // Remove internal _id field from results
     const cleanPhotos = photos.map(({ _id, ...photo }) => photo);
@@ -86,7 +87,7 @@ export async function PUT(request: NextRequest) {
       { $set: { ...updateData, id } }
     );
 
-    if (result && (result as any).matchedCount === 0) {
+    if (result && result.modifiedCount === 0) {
       console.error('[API] Photo not found:', id);
       return NextResponse.json({ error: 'Photo not found' }, { status: 404 });
     }
@@ -120,7 +121,7 @@ export async function DELETE(request: NextRequest) {
     const collection = getPhotosCollection();
     const result = await collection.deleteOne({ id });
 
-    if (result && (result as any).deletedCount === 0) {
+    if (result && result.deletedCount === 0) {
       console.error('[API] Photo not found for deletion:', id);
       return NextResponse.json({ error: 'Photo not found' }, { status: 404 });
     }

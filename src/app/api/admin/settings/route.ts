@@ -69,11 +69,7 @@ export async function PUT(request: NextRequest) {
     const result = await collection.updateOne(
       { docId: 'main' },
       { 
-        $set: { ...updateData, docId: 'main' },
-        $setOnInsert: { 
-          lightWaveEffect: updateData.lightWaveEffect ?? DEFAULT_SETTINGS.lightWaveEffect,
-          reviewsEnabled: updateData.reviewsEnabled ?? DEFAULT_SETTINGS.reviewsEnabled,
-        }
+        $set: { ...updateData, docId: 'main' }
       },
       { upsert: true }
     );

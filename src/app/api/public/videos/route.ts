@@ -11,7 +11,8 @@ export async function GET() {
   
   try {
     const collection = getVideosCollection();
-    const videos = await collection.find({}).toArray();
+    const cursor = await collection.find({});
+    const videos = await cursor.toArray();
     
     // Remove database _id field from results
     const cleanVideos = videos.map(({ _id, ...video }) => video);

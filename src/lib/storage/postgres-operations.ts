@@ -215,7 +215,7 @@ export const photosOperations = {
     );
   },
 
-  async updateOne(id: string, updates: Partial<PhotoDocument>): Promise<void> {
+  async updateOne(id: string, updates: Partial<PhotoDocument>): Promise<{ modifiedCount: number }> {
     const snakeUpdates = toSnakeCase(updates);
     const fields = Object.keys(snakeUpdates)
       .filter(key => key !== 'id')
@@ -226,14 +226,17 @@ export const photosOperations = {
       .filter(key => key !== 'id')
       .map(key => snakeUpdates[key]);
     
-    await query(
+    const result = await query(
       `UPDATE ${TABLES.PHOTOS} SET ${fields}, updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
       [id, ...values]
     );
+    
+    return { modifiedCount: result.rowCount || 0 };
   },
 
-  async deleteOne(id: string): Promise<void> {
-    await query(`DELETE FROM ${TABLES.PHOTOS} WHERE id = $1`, [id]);
+  async deleteOne(id: string): Promise<{ deletedCount: number }> {
+    const result = await query(`DELETE FROM ${TABLES.PHOTOS} WHERE id = $1`, [id]);
+    return { deletedCount: result.rowCount || 0 };
   },
 };
 
@@ -277,7 +280,7 @@ export const videosOperations = {
     );
   },
 
-  async updateOne(id: string, updates: Partial<VideoDocument>): Promise<void> {
+  async updateOne(id: string, updates: Partial<VideoDocument>): Promise<{ modifiedCount: number }> {
     const snakeUpdates = toSnakeCase(updates);
     const fields = Object.keys(snakeUpdates)
       .filter(key => key !== 'id')
@@ -288,14 +291,17 @@ export const videosOperations = {
       .filter(key => key !== 'id')
       .map(key => snakeUpdates[key]);
     
-    await query(
+    const result = await query(
       `UPDATE ${TABLES.VIDEOS} SET ${fields}, updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
       [id, ...values]
     );
+    
+    return { modifiedCount: result.rowCount || 0 };
   },
 
-  async deleteOne(id: string): Promise<void> {
-    await query(`DELETE FROM ${TABLES.VIDEOS} WHERE id = $1`, [id]);
+  async deleteOne(id: string): Promise<{ deletedCount: number }> {
+    const result = await query(`DELETE FROM ${TABLES.VIDEOS} WHERE id = $1`, [id]);
+    return { deletedCount: result.rowCount || 0 };
   },
 };
 
@@ -347,7 +353,7 @@ export const reviewsOperations = {
     );
   },
 
-  async updateOne(id: string, updates: Partial<ReviewDocument>): Promise<void> {
+  async updateOne(id: string, updates: Partial<ReviewDocument>): Promise<{ modifiedCount: number }> {
     const snakeUpdates = toSnakeCase(updates);
     const fields = Object.keys(snakeUpdates)
       .filter(key => key !== 'id')
@@ -358,13 +364,16 @@ export const reviewsOperations = {
       .filter(key => key !== 'id')
       .map(key => snakeUpdates[key]);
     
-    await query(
+    const result = await query(
       `UPDATE ${TABLES.REVIEWS} SET ${fields}, updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
       [id, ...values]
     );
+    
+    return { modifiedCount: result.rowCount || 0 };
   },
 
-  async deleteOne(id: string): Promise<void> {
-    await query(`DELETE FROM ${TABLES.REVIEWS} WHERE id = $1`, [id]);
+  async deleteOne(id: string): Promise<{ deletedCount: number }> {
+    const result = await query(`DELETE FROM ${TABLES.REVIEWS} WHERE id = $1`, [id]);
+    return { deletedCount: result.rowCount || 0 };
   },
 };

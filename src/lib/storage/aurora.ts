@@ -1,6 +1,5 @@
-import { Pool, PoolConfig, QueryResult } from 'pg';
+import { Pool, PoolConfig, QueryResult, QueryResultRow } from 'pg';
 import { AuroraDSQLClient } from '@aws/aurora-dsql-node-postgres-connector';
-import { awsCredentialsProvider } from '@vercel/oidc-aws-credentials-provider';
 
 /**
  * Aurora DSQL (PostgreSQL) connection utility for portfolio data storage
@@ -82,30 +81,31 @@ export function getAuroraPool(): Pool {
       connectionTimeoutMillis: 10000, // Return error if connection takes > 10 seconds
     };
 
-    // Check if we're in Vercel environment with OIDC support
-    if (process.env.AWS_ROLE_ARN && process.env.VERCEL) {
-      console.log('[Aurora] Configuring with Vercel OIDC authentication');
+    // Check if we're in Vercel environment or using Aurora DSQL
+    if (process.env.PGHOST && process.env.PGHOST.includes('dsql')) {
+      console.log('[Aurora] Configuring with Aurora DSQL Client for IAM authentication');
       
-      // Use AuroraDSQLClient with OIDC credentials for Vercel
+      // Use AuroraDSQLClient which automatically handles IAM auth
+      // It will use AWS credentials from environment (including OIDC-sourced ones)
       const client = new AuroraDSQLClient({
         host: process.env.PGHOST,
         user: process.env.PGUSER,
         database: process.env.PGDATABASE,
         ssl: true,
-        region: process.env.AWS_REGION,
-        credentials: awsCredentialsProvider({
-          roleArn: process.env.AWS_ROLE_ARN,
-        }),
       }) as any; // AuroraDSQLClient extends Pool
 
       cachedPool = client;
     } else {
-      console.log('[Aurora] Configuring with standard IAM authentication');
+      console.log('[Aurora] Configuring with standard PostgreSQL Pool');
       
-      // Use standard Pool with AWS SDK credentials for local development
+      // Use standard Pool for non-DSQL PostgreSQL
       cachedPool = new Pool(poolConfig);
     }
 
+    if (!cachedPool) {
+      throw new Error('Failed to create connection pool');
+    }
+    
     console.log('[Aurora] ✓ Connection pool created successfully');
     
     // Handle pool errors
@@ -123,7 +123,7 @@ export function getAuroraPool(): Pool {
 /**
  * Execute a query on the Aurora DSQL database
  */
-export async function query<T = any>(text: string, params?: any[]): Promise<QueryResult<T>> {
+export async function query<T extends QueryResultRow = any>(text: string, params?: any[]): Promise<QueryResult<T>> {
   const pool = getAuroraPool();
   
   try {
