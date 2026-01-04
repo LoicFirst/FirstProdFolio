@@ -19,10 +19,24 @@ export async function authenticatedFetch(
     headers.set('Content-Type', 'application/json');
   }
   
-  return fetch(url, {
+  const response = await fetch(url, {
     ...options,
     headers,
   });
+  
+  // Handle authentication failures (401/403)
+  // Clear session and redirect to login for any authentication error
+  if (response.status === 401 || response.status === 403) {
+    console.warn('[API] Authentication failed (status:', response.status, '), clearing session...');
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('auth_email');
+    // Redirect to login
+    if (typeof window !== 'undefined') {
+      window.location.href = '/admin/login';
+    }
+  }
+  
+  return response;
 }
 
 /**

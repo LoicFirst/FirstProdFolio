@@ -19,21 +19,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
 
-  // Load token from localStorage on mount
+  // Load and validate token from localStorage on mount
   useEffect(() => {
     setIsMounted(true);
     
-    if (typeof window !== 'undefined') {
-      const storedToken = localStorage.getItem('auth_token');
-      const storedEmail = localStorage.getItem('auth_email');
-      
-      if (storedToken && storedEmail) {
-        setToken(storedToken);
-        setEmail(storedEmail);
+    const validateStoredToken = async () => {
+      if (typeof window !== 'undefined') {
+        const storedToken = localStorage.getItem('auth_token');
+        const storedEmail = localStorage.getItem('auth_email');
+        
+        if (storedToken && storedEmail) {
+          console.log('[AUTH] Found stored token, validating...');
+          
+          // Validate token with server
+          try {
+            const response = await fetch('/api/admin/validate-token', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${storedToken}`,
+                'Content-Type': 'application/json',
+              },
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok && data.valid) {
+              console.log('[AUTH] ✓ Stored token is valid');
+              setToken(storedToken);
+              setEmail(storedEmail);
+            } else {
+              console.warn('[AUTH] ⚠️  Stored token is invalid or expired, clearing...');
+              localStorage.removeItem('auth_token');
+              localStorage.removeItem('auth_email');
+            }
+          } catch (error) {
+            console.error('[AUTH] Error validating stored token:', error);
+            // Clear invalid token
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('auth_email');
+          }
+        }
       }
-    }
+      
+      setIsLoading(false);
+    };
     
-    setIsLoading(false);
+    validateStoredToken();
   }, []);
 
   const login = async (email: string, password: string) => {
