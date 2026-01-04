@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, handleApiError, logApiRequest } from '@/lib/api-helpers';
 import { getAboutCollection } from '@/lib/storage/database';
 import { AboutDocument } from '@/lib/storage/types';
+import { cache } from '@/lib/cache';
+
+const CACHE_KEY = 'public:about';
 
 interface AboutData {
   profile?: {
@@ -73,6 +76,9 @@ export async function POST(request: NextRequest) {
       { $set: { ...body, docId: ABOUT_DOC_ID } },
       { upsert: true }
     );
+
+    // Clear cache so public site shows updated data
+    cache.clear(CACHE_KEY);
 
     console.log('[API] ✓ About data updated successfully in database');
     return NextResponse.json({ about: body }, { status: 200 });

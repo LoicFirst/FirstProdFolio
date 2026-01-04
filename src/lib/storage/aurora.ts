@@ -74,16 +74,19 @@ export function getAuroraPool(): Pool {
   console.log('[Aurora] Creating new connection pool...');
 
   try {
-    // Configure pool with Aurora DSQL settings
+    // Configure pool with Aurora DSQL settings - optimized for performance
     const poolConfig: PoolConfig = {
       host: process.env.PGHOST,
       port: parseInt(process.env.PGPORT || '5432', 10),
       user: process.env.PGUSER,
       database: process.env.PGDATABASE,
       ssl: process.env.PGSSLMODE === 'require' ? { rejectUnauthorized: true } : false,
-      max: 10, // Maximum pool size
-      idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
-      connectionTimeoutMillis: 10000, // Return error if connection takes > 10 seconds
+      max: 20, // Increased pool size for better concurrency
+      min: 2, // Keep minimum connections warm
+      idleTimeoutMillis: 60000, // Keep connections alive longer (60 seconds)
+      connectionTimeoutMillis: 5000, // Fail faster (5 seconds instead of 10)
+      statement_timeout: 5000, // Query timeout: 5 seconds
+      query_timeout: 5000, // Additional query timeout
     };
 
     // Check if we're in Vercel environment or using Aurora DSQL
@@ -126,6 +129,25 @@ export function getAuroraPool(): Pool {
 }
 
 /**
+ * Execute a query with timeout
+ */
+async function queryWithTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  operation: string
+): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(
+        () => reject(new Error(`${operation} timed out after ${timeoutMs}ms`)),
+        timeoutMs
+      )
+    ),
+  ]);
+}
+
+/**
  * Execute a query on the Aurora DSQL database
  */
 export async function query<T extends QueryResultRow = any>(text: string, params?: any[]): Promise<QueryResult<T>> {
@@ -133,7 +155,14 @@ export async function query<T extends QueryResultRow = any>(text: string, params
   
   try {
     console.log('[Aurora] Executing query:', text.substring(0, 100) + (text.length > 100 ? '...' : ''));
-    const result = await pool.query<T>(text, params);
+    
+    // Add timeout to prevent hanging queries
+    const result = await queryWithTimeout(
+      pool.query<T>(text, params),
+      5000, // 5 second timeout
+      'Query'
+    );
+    
     console.log('[Aurora] ✓ Query executed successfully, rows:', result.rowCount);
     return result;
   } catch (error) {

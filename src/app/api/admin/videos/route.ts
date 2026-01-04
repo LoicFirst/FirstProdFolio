@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, handleApiError, logApiRequest } from '@/lib/api-helpers';
 import { getVideosCollection } from '@/lib/storage/database';
 import { VideoDocument } from '@/lib/storage/types';
+import { cache } from '@/lib/cache';
+
+const CACHE_KEY = 'public:videos';
 
 // GET all videos
 export async function GET(request: NextRequest) {
@@ -56,6 +59,9 @@ export async function POST(request: NextRequest) {
 
     await collection.insertOne(newVideo);
 
+    // Clear cache so public site shows updated data
+    cache.clear(CACHE_KEY);
+
     console.log('[API] ✓ Video created successfully in database:', newVideo.id);
     return NextResponse.json({ video: newVideo }, { status: 201 });
   } catch (error) {
@@ -92,6 +98,9 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Video not found' }, { status: 404 });
     }
 
+    // Clear cache so public site shows updated data
+    cache.clear(CACHE_KEY);
+
     const updatedVideo = { ...updateData, id };
     console.log('[API] ✓ Video updated successfully in database:', id);
     return NextResponse.json({ video: updatedVideo });
@@ -125,6 +134,9 @@ export async function DELETE(request: NextRequest) {
       console.error('[API] Video not found for deletion:', id);
       return NextResponse.json({ error: 'Video not found' }, { status: 404 });
     }
+
+    // Clear cache so public site shows updated data
+    cache.clear(CACHE_KEY);
 
     console.log('[API] ✓ Video deleted successfully from database:', id);
     return NextResponse.json({ message: 'Video deleted successfully' });
