@@ -94,7 +94,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Clear reviews cache so public site shows updated data
-    cache.clearAll(); // Clear all review-related caches
+    cache.clearPattern('public:reviews'); // Clear all review-related caches
 
     const updatedReview = { ...updateData, id, updated_at: now };
     console.log('[API] ✓ Review updated successfully in database:', id);
@@ -126,7 +126,7 @@ export async function DELETE(request: NextRequest) {
     await collection.deleteOne({ id });
 
     // Clear reviews cache so public site shows updated data
-    cache.clearAll(); // Clear all review-related caches
+    cache.clearPattern('public:reviews'); // Clear all review-related caches
 
     console.log('[API] ✓ Review deleted successfully from database:', id);
     return NextResponse.json({ message: 'Review deleted successfully' });
@@ -176,7 +176,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Clear reviews cache so public site shows updated data
-    cache.clearAll(); // Clear all review-related caches
+    cache.clearPattern('public:reviews'); // Clear all review-related caches
 
     console.log('[API] ✓ Bulk action completed:', modifiedCount, 'reviews updated');
     

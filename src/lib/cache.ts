@@ -50,6 +50,17 @@ class MemoryCache {
   }
 
   /**
+   * Clear cache entries matching a pattern (prefix)
+   */
+  clearPattern(pattern: string): void {
+    for (const key of this.cache.keys()) {
+      if (key.startsWith(pattern)) {
+        this.cache.delete(key);
+      }
+    }
+  }
+
+  /**
    * Clear all cache entries
    */
   clearAll(): void {

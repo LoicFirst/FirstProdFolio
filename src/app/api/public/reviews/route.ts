@@ -216,8 +216,8 @@ export async function POST(request: NextRequest) {
     
     await collection.insertOne(newReview);
     
-    // Clear reviews cache since new review was added (though it won't appear until approved)
-    cache.clearAll(); // Simple approach: clear all cache
+    // Note: No cache clearing needed here since new reviews require admin approval
+    // They won't appear on public site until approved, at which point admin route clears cache
     
     console.log('[API] ✓ New review submitted:', id);
     

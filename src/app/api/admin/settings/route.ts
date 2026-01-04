@@ -76,8 +76,9 @@ export async function PUT(request: NextRequest) {
     );
 
     // Clear settings-related caches so public site shows updated data
-    cache.clear('public:reviews:settings'); // Clear reviews settings cache
-    cache.clearAll(); // Clear all caches that might depend on settings
+    cache.clear('public:reviews:settings'); // Clear reviews settings cache only
+    // Note: Settings may affect multiple routes, but they're rarely changed
+    // Consider adding specific cache keys if settings expand
 
     console.log('[API] ✓ Settings updated successfully');
     

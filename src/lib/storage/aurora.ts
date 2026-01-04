@@ -85,8 +85,7 @@ export function getAuroraPool(): Pool {
       min: 2, // Keep minimum connections warm
       idleTimeoutMillis: 60000, // Keep connections alive longer (60 seconds)
       connectionTimeoutMillis: 5000, // Fail faster (5 seconds instead of 10)
-      statement_timeout: 5000, // Query timeout: 5 seconds
-      query_timeout: 5000, // Additional query timeout
+      // Note: statement_timeout and query_timeout are handled at query level
     };
 
     // Check if we're in Vercel environment or using Aurora DSQL
