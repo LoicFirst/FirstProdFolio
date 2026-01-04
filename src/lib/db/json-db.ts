@@ -60,14 +60,9 @@ export function readData(): DatabaseData {
     return JSON.parse(fileContent);
   } catch (error) {
     console.error('[JSON-DB] Error reading data file:', error);
-    // Return default structure if file doesn't exist or is corrupted
-    return {
-      projects: [],
-      admin: {
-        email: 'loicmazagran2007@gmail.com',
-        password: '$2b$10$VXrCb7vqpNjznoeiPs/SE.i1aF7p9d7C963dtvZZb.5fX2wcwyZFC',
-      },
-    };
+    console.error('[JSON-DB] Please create data.json from data.json.example');
+    // Throw error instead of returning default to prevent accidental use without proper setup
+    throw new Error('data.json file not found. Please create it from data.json.example with your own credentials.');
   }
 }
 

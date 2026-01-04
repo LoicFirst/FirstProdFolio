@@ -10,11 +10,14 @@ L'interface d'administration est accessible à l'adresse suivante :
 - **Local** : `http://localhost:3000/admin`
 
 ### Connexion
-L'application utilise maintenant une authentification JWT simplifiée avec des identifiants stockés de manière sécurisée dans `data.json` :
-- **Email** : `loicmazagran2007@gmail.com`
-- **Mot de passe** : `CRyTDXCGhADE4`
+L'application utilise maintenant une authentification JWT simplifiée avec des identifiants stockés de manière sécurisée dans `data.json`.
 
-Le mot de passe est hashé avec bcrypt pour la sécurité.
+**Configuration initiale :**
+1. Copiez `data.json.example` vers `data.json`
+2. Remplacez l'email et le hash du mot de passe par vos propres identifiants
+3. Le mot de passe doit être hashé avec bcrypt (voir section "Mise à jour des identifiants admin" ci-dessous)
+
+⚠️ **Important** : Ne commitez jamais le fichier `data.json` sur GitHub car il contient vos identifiants. Ce fichier est déjà dans `.gitignore`.
 
 ## 📋 Fonctionnalités disponibles
 
@@ -102,7 +105,7 @@ Pour modifier le mot de passe administrateur :
    ```json
    {
      "admin": {
-       "email": "loicmazagran2007@gmail.com",
+       "email": "votre-email@example.com",
        "password": "NOUVEAU_HASH_ICI"
      }
    }
@@ -113,7 +116,7 @@ Pour modifier le mot de passe administrateur :
 #### Erreur "Email ou mot de passe incorrect"
 
 Si vous ne pouvez pas vous connecter :
-1. **Vérifier les identifiants** : Email `loicmazagran2007@gmail.com` et mot de passe `CRyTDXCGhADE4`
+1. **Vérifier les identifiants** : Assurez-vous d'utiliser les identifiants configurés dans votre fichier `data.json`
 2. **Consulter les logs** : Vérifiez les logs de déploiement sur Vercel pour voir les messages d'authentification :
    - `[AUTH]` : Messages d'authentification
    - `[JWT]` : Génération et vérification des tokens
