@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, handleApiError, logApiRequest } from '@/lib/api-helpers';
-import { getVideosCollection } from '@/lib/storage/mongodb';
+import { getVideosCollection } from '@/lib/storage/database';
 import { VideoDocument } from '@/lib/storage/types';
 
 // GET all videos
@@ -11,13 +11,14 @@ export async function GET(request: NextRequest) {
     const { error } = await requireAuth(request);
     if (error) return error;
 
-    const collection = await getVideosCollection();
-    const videos = await collection.find({}).toArray();
+    const collection = getVideosCollection();
+    const cursor = await collection.find({});
+    const videos = await cursor.toArray();
     
-    // Remove MongoDB _id field from results
+    // Remove database _id field from results
     const cleanVideos = videos.map(({ _id, ...video }) => video);
     
-    console.log(`[API] ✓ Retrieved ${cleanVideos.length} videos from MongoDB`);
+    console.log(`[API] ✓ Retrieved ${cleanVideos.length} videos from database`);
     return NextResponse.json({ videos: cleanVideos });
   } catch (error) {
     return handleApiError(error, 'GET /api/admin/videos');
@@ -35,7 +36,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     console.log('[API] Creating video with title:', body.title);
 
-    const collection = await getVideosCollection();
+    const collection = getVideosCollection();
     
     // Generate a unique ID using timestamp and random string for better uniqueness
     // The timestamp ensures chronological ordering, and random suffix prevents collisions
@@ -55,7 +56,7 @@ export async function POST(request: NextRequest) {
 
     await collection.insertOne(newVideo);
 
-    console.log('[API] ✓ Video created successfully in MongoDB:', newVideo.id);
+    console.log('[API] ✓ Video created successfully in database:', newVideo.id);
     return NextResponse.json({ video: newVideo }, { status: 201 });
   } catch (error) {
     return handleApiError(error, 'POST /api/admin/videos');
@@ -80,19 +81,19 @@ export async function PUT(request: NextRequest) {
 
     console.log('[API] Updating video:', id);
 
-    const collection = await getVideosCollection();
+    const collection = getVideosCollection();
     const result = await collection.updateOne(
       { id },
       { $set: { ...updateData, id } }
     );
 
-    if (result.matchedCount === 0) {
+    if (result.modifiedCount === 0) {
       console.error('[API] Video not found:', id);
       return NextResponse.json({ error: 'Video not found' }, { status: 404 });
     }
 
     const updatedVideo = { ...updateData, id };
-    console.log('[API] ✓ Video updated successfully in MongoDB:', id);
+    console.log('[API] ✓ Video updated successfully in database:', id);
     return NextResponse.json({ video: updatedVideo });
   } catch (error) {
     return handleApiError(error, 'PUT /api/admin/videos');
@@ -117,7 +118,7 @@ export async function DELETE(request: NextRequest) {
 
     console.log('[API] Deleting video:', id);
 
-    const collection = await getVideosCollection();
+    const collection = getVideosCollection();
     const result = await collection.deleteOne({ id });
 
     if (result.deletedCount === 0) {
@@ -125,7 +126,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Video not found' }, { status: 404 });
     }
 
-    console.log('[API] ✓ Video deleted successfully from MongoDB:', id);
+    console.log('[API] ✓ Video deleted successfully from database:', id);
     return NextResponse.json({ message: 'Video deleted successfully' });
   } catch (error) {
     return handleApiError(error, 'DELETE /api/admin/videos');

@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import { getAboutCollection } from '@/lib/storage/mongodb';
+import { getAboutCollection } from '@/lib/storage/database';
 import { AboutDocument } from '@/lib/storage/types';
 
-// Default about data when MongoDB is not available
+// Default about data when database is not available
 const DEFAULT_ABOUT_DATA = {
   profile: {
     name: "Loic Mazagran",
@@ -34,17 +34,17 @@ const DEFAULT_ABOUT_DATA = {
 
 /**
  * GET - Get about data for public display
- * This route reads from MongoDB to ensure real-time synchronization
+ * This route reads from database to ensure real-time synchronization
  * with admin dashboard changes
  */
 export async function GET() {
   console.log('[API] GET /api/public/about');
   
   try {
-    const collection = await getAboutCollection();
+    const collection = getAboutCollection();
     const aboutDoc = await collection.findOne({ docId: 'about-data' });
     
-    // Remove MongoDB internal fields
+    // Remove database internal fields
     let data = {};
     if (aboutDoc) {
       const { _id, docId, ...about }: Partial<AboutDocument> = aboutDoc;
@@ -62,7 +62,7 @@ export async function GET() {
       });
     }
     
-    console.log('[API] ✓ Retrieved about data from MongoDB');
+    console.log('[API] ✓ Retrieved about data from database');
     
     // Return with cache control headers to prevent stale data
     return NextResponse.json(data, {
@@ -72,7 +72,7 @@ export async function GET() {
       },
     });
   } catch (error) {
-    console.error('[API] Error reading about data from MongoDB:', error);
+    console.error('[API] Error reading about data from database:', error);
     
     // Return default data on error instead of 500
     console.log('[API] Returning default about data due to error');

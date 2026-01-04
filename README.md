@@ -16,6 +16,11 @@ Ce site web présente mon portfolio de créations artistiques, notamment mes cou
 - **React Player** - Lecteur vidéo moderne
 - **React Icons** - Icônes SVG élégantes
 
+### Backend & Base de Données
+- **Amazon Aurora PostgreSQL (DSQL)** - Base de données serverless avec authentification IAM
+- **Vercel OIDC** - Authentification sécurisée AWS sans credentials statiques
+- **Node.js pg** - Driver PostgreSQL pour Node.js
+
 ### Fonctionnalités
 - ✅ Page d'accueil avec animations
 - ✅ Galerie vidéos avec effet Ambilight
@@ -87,6 +92,48 @@ Si vous souhaitez reconfigurer le projet :
 npm run setup
 ```
 
+## 🗄️ Configuration Aurora PostgreSQL
+
+Le projet utilise Amazon Aurora PostgreSQL (DSQL) pour le stockage des données.
+
+### Variables d'Environnement Requises
+
+Copiez `.env.example` vers `.env.local` et configurez :
+
+```bash
+# AWS Configuration
+AWS_ACCOUNT_ID=your-aws-account-id
+AWS_REGION=us-east-1
+AWS_RESOURCE_ARN=arn:aws:dsql:region:account:cluster/cluster-id
+AWS_ROLE_ARN=arn:aws:iam::account:role/your-role
+
+# PostgreSQL Configuration
+PGDATABASE=postgres
+PGHOST=your-cluster.dsql.region.on.aws
+PGPORT=5432
+PGSSLMODE=require
+PGUSER=admin
+
+# JWT Secret (généré automatiquement)
+JWT_SECRET=your-jwt-secret
+
+# Cloudinary (optionnel)
+CLOUDINARY_CLOUD_NAME=your-cloud-name
+CLOUDINARY_API_KEY=your-api-key
+CLOUDINARY_API_SECRET=your-api-secret
+```
+
+### Guide de Migration Complet
+
+Pour un guide détaillé sur la configuration Aurora et le déploiement sur Vercel, consultez [AURORA_MIGRATION_GUIDE.md](./AURORA_MIGRATION_GUIDE.md).
+
+Ce guide inclut :
+- Configuration AWS IAM et Aurora DSQL
+- Configuration Vercel OIDC
+- Initialisation du schéma de base de données
+- Migration des données depuis MongoDB
+- Dépannage et résolution de problèmes
+
 ## 📊 Logs et Debugging
 
 L'application utilise des logs détaillés avec des préfixes spécifiques pour faciliter le debugging.
@@ -96,8 +143,9 @@ L'application utilise des logs détaillés avec des préfixes spécifiques pour 
 | Préfixe | Description | Exemple |
 |---------|-------------|---------|
 | `[AUTH]` | Authentification et login | `[AUTH] ✅ LOGIN SUCCESSFUL` |
-| `[JSON-DB]` | Opérations de base de données | `[JSON-DB] ✓ Data written successfully` |
-| `[ERROR]` | Erreurs critiques | `[ERROR] ❌ data.json file not found` |
+| `[Aurora]` | Connexion Aurora PostgreSQL | `[Aurora] ✓ Connection pool created` |
+| `[API]` | Requêtes API | `[API] GET /api/public/about` |
+| `[ERROR]` | Erreurs critiques | `[ERROR] ❌ Connection failed` |
 | `[SETUP]` | Configuration initiale | `[SETUP] ✅ Configuration terminée` |
 
 ### Exemples de Logs d'Authentification

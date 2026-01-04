@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, handleApiError, logApiRequest } from '@/lib/api-helpers';
-import { getReviewsCollection } from '@/lib/storage/mongodb';
+import { getReviewsCollection } from '@/lib/storage/database';
 import { ReviewDocument } from '@/lib/storage/types';
-import { Filter } from 'mongodb';
 
 // GET all reviews (admin can see all statuses)
 export async function GET(request: NextRequest) {
@@ -14,59 +13,34 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status'); // Filter by status: pending, approved, rejected
-    const page = parseInt(searchParams.get('page') || '1', 10);
-    const limit = parseInt(searchParams.get('limit') || '20', 10);
-    const search = searchParams.get('search'); // Search by name or profession
-    const skip = (page - 1) * limit;
-
-    const collection = await getReviewsCollection();
     
-    // Build query filter
-    const query: Filter<ReviewDocument> = {};
+    const collection = getReviewsCollection();
     
-    if (status && ['pending', 'approved', 'rejected'].includes(status)) {
-      query.status = status as 'pending' | 'approved' | 'rejected';
-    }
+    // Get reviews with optional status filter
+    const filter = status && ['pending', 'approved', 'rejected'].includes(status) 
+      ? { status: status as 'pending' | 'approved' | 'rejected' }
+      : undefined;
     
-    if (search) {
-      query.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { profession: { $regex: search, $options: 'i' } },
-      ];
-    }
+    const cursor = await collection.find(filter);
+    const allReviews = await cursor.toArray();
     
-    const totalCount = await collection.countDocuments(query);
-    const reviews = await collection
-      .find(query)
-      .sort({ created_at: -1 })
-      .skip(skip)
-      .limit(limit)
-      .toArray();
-    
-    // Remove MongoDB _id field from results
-    const cleanReviews = reviews.map(({ _id, ...review }) => review);
+    // Remove database _id field from results
+    const cleanReviews = allReviews.map(({ _id, ...review }) => review);
     
     // Get counts by status for dashboard
-    const pendingCount = await collection.countDocuments({ status: 'pending' });
-    const approvedCount = await collection.countDocuments({ status: 'approved' });
-    const rejectedCount = await collection.countDocuments({ status: 'rejected' });
+    const pendingCount = cleanReviews.filter(r => r.status === 'pending').length;
+    const approvedCount = cleanReviews.filter(r => r.status === 'approved').length;
+    const rejectedCount = cleanReviews.filter(r => r.status === 'rejected').length;
     
-    console.log(`[API] ✓ Retrieved ${cleanReviews.length} reviews from MongoDB`);
+    console.log(`[API] ✓ Retrieved ${cleanReviews.length} reviews from database`);
     
     return NextResponse.json({
       reviews: cleanReviews,
-      pagination: {
-        page,
-        limit,
-        totalCount,
-        totalPages: Math.ceil(totalCount / limit),
-        hasMore: skip + reviews.length < totalCount,
-      },
       stats: {
         pending: pendingCount,
         approved: approvedCount,
         rejected: rejectedCount,
-        total: pendingCount + approvedCount + rejectedCount,
+        total: cleanReviews.length,
       }
     });
   } catch (error) {
@@ -97,7 +71,7 @@ export async function PUT(request: NextRequest) {
 
     console.log('[API] Updating review:', id, 'with status:', updateData.status);
 
-    const collection = await getReviewsCollection();
+    const collection = getReviewsCollection();
     
     // Add updated timestamp
     const now = new Date().toISOString();
@@ -111,14 +85,15 @@ export async function PUT(request: NextRequest) {
       { id },
       { $set: update }
     );
-
-    if (result.matchedCount === 0) {
-      console.error('[API] Review not found:', id);
+    
+    // Check if update was successful
+    if (result && result.modifiedCount === 0) {
+      console.error('[API] Review not found or no changes made:', id);
       return NextResponse.json({ error: 'Review not found' }, { status: 404 });
     }
 
     const updatedReview = { ...updateData, id, updated_at: now };
-    console.log('[API] ✓ Review updated successfully in MongoDB:', id);
+    console.log('[API] ✓ Review updated successfully in database:', id);
     return NextResponse.json({ review: updatedReview });
   } catch (error) {
     return handleApiError(error, 'PUT /api/admin/reviews');
@@ -143,15 +118,10 @@ export async function DELETE(request: NextRequest) {
 
     console.log('[API] Deleting review:', id);
 
-    const collection = await getReviewsCollection();
-    const result = await collection.deleteOne({ id });
+    const collection = getReviewsCollection();
+    await collection.deleteOne({ id });
 
-    if (result.deletedCount === 0) {
-      console.error('[API] Review not found for deletion:', id);
-      return NextResponse.json({ error: 'Review not found' }, { status: 404 });
-    }
-
-    console.log('[API] ✓ Review deleted successfully from MongoDB:', id);
+    console.log('[API] ✓ Review deleted successfully from database:', id);
     return NextResponse.json({ message: 'Review deleted successfully' });
   } catch (error) {
     return handleApiError(error, 'DELETE /api/admin/reviews');
@@ -182,17 +152,27 @@ export async function POST(request: NextRequest) {
 
     console.log('[API] Bulk', action, 'for', ids.length, 'reviews');
 
-    const collection = await getReviewsCollection();
-    const result = await collection.updateMany(
-      { id: { $in: ids } },
-      { $set: { status: newStatus, updated_at: now } }
-    );
+    const collection = getReviewsCollection();
+    
+    // Update each review individually (simplified for PostgreSQL compatibility)
+    let modifiedCount = 0;
+    for (const id of ids) {
+      try {
+        await collection.updateOne(
+          { id },
+          { $set: { status: newStatus, updated_at: now } }
+        );
+        modifiedCount++;
+      } catch (err) {
+        console.error(`[API] Failed to update review ${id}:`, err);
+      }
+    }
 
-    console.log('[API] ✓ Bulk action completed:', result.modifiedCount, 'reviews updated');
+    console.log('[API] ✓ Bulk action completed:', modifiedCount, 'reviews updated');
     
     return NextResponse.json({
-      message: `Successfully ${action}d ${result.modifiedCount} review(s)`,
-      modifiedCount: result.modifiedCount,
+      message: `Successfully ${action}d ${modifiedCount} review(s)`,
+      modifiedCount,
     });
   } catch (error) {
     return handleApiError(error, 'POST /api/admin/reviews');

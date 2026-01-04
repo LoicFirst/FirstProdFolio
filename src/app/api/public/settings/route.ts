@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getSettingsCollection } from '@/lib/storage/mongodb';
+import { getSettingsCollection } from '@/lib/storage/database';
 
 // Default settings
 const DEFAULT_SETTINGS = {
@@ -15,7 +15,7 @@ export async function GET() {
   console.log('[API] GET /api/public/settings');
   
   try {
-    const collection = await getSettingsCollection();
+    const collection = getSettingsCollection();
     const settings = await collection.findOne({ docId: 'main' });
     
     if (!settings) {
@@ -46,7 +46,7 @@ export async function GET() {
       }
     );
   } catch (error) {
-    console.error('[API] Error reading settings from MongoDB:', error);
+    console.error('[API] Error reading settings from database:', error);
     
     // Return defaults on error
     return NextResponse.json(
