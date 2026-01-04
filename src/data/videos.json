@@ -59,6 +59,17 @@
       "thumbnail_url": "/images/thumbnails/nuit-blanche.jpg",
       "duration": "1:30",
       "category": "Publicité"
+    },
+    {
+      "title": "Test Synchronisation",
+      "description": "Une vidéo de test pour vérifier que les modifications admin sont bien synchronisées avec le site public.",
+      "year": 2026,
+      "video_url": "https://www.youtube.com/watch?v=test123",
+      "thumbnail_url": "https://via.placeholder.com/640x360?text=Test",
+      "duration": "5:00",
+      "category": "Court-métrage",
+      "isPublished": true,
+      "id": "video-007-1767530773375"
     }
   ]
 }
