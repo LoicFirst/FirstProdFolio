@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateRequest } from '@/lib/auth/jwt';
+import { isFilesystemError, type FilesystemError } from '@/lib/filesystem';
+import { API_ERROR_MESSAGES } from '@/lib/error-messages';
 
 /**
  * Helper to check authentication for API routes using JWT
@@ -16,7 +18,7 @@ export async function requireAuth(request?: NextRequest) {
     console.error('[API] Unauthorized - No request object provided for JWT authentication');
     return {
       error: NextResponse.json(
-        { error: 'Unauthorized - Please provide authentication token' },
+        API_ERROR_MESSAGES.UNAUTHORIZED,
         { status: 401 }
       ),
       session: null,
@@ -43,7 +45,7 @@ export async function requireAuth(request?: NextRequest) {
     console.error('[API] Error checking authentication:', error);
     return {
       error: NextResponse.json(
-        { error: 'Authentication check failed' },
+        API_ERROR_MESSAGES.AUTH_CHECK_FAILED,
         { status: 500 }
       ),
       session: null,
@@ -65,31 +67,88 @@ export function handleApiError(error: unknown, context: string): NextResponse {
       console.error(`[API] Error stack:`, error.stack);
     }
     
-    // Check for specific error types
+    // Check for filesystem errors (read-only environment)
+    if (isFilesystemError(error)) {
+      const fsError = error as FilesystemError;
+      
+      if (fsError.isReadOnly || fsError.code === 'EROFS') {
+        console.error(`[API] ❌ READ-ONLY FILESYSTEM DETECTED`);
+        console.error(`[API] This is common in serverless environments like Vercel`);
+        console.error(`[API] Help:`, fsError.helpMessage);
+        return NextResponse.json(
+          { 
+            ...API_ERROR_MESSAGES.READ_ONLY_FILESYSTEM,
+            isReadOnly: true
+          },
+          { status: 500 }
+        );
+      }
+      
+      // Check for file not found errors
+      if (fsError.code === 'ENOENT') {
+        console.error(`[API] ❌ FILE NOT FOUND`);
+        return NextResponse.json(
+          { 
+            ...API_ERROR_MESSAGES.FILE_NOT_FOUND,
+            details: fsError.helpMessage || API_ERROR_MESSAGES.FILE_NOT_FOUND.details,
+            code: 'ENOENT'
+          },
+          { status: 500 }
+        );
+      }
+      
+      // Check for permission errors
+      if (fsError.code === 'EACCES') {
+        console.error(`[API] ❌ PERMISSION DENIED`);
+        return NextResponse.json(
+          { 
+            ...API_ERROR_MESSAGES.PERMISSION_DENIED,
+            details: fsError.helpMessage || API_ERROR_MESSAGES.PERMISSION_DENIED.details,
+            code: 'EACCES'
+          },
+          { status: 500 }
+        );
+      }
+      
+      // Check for invalid JSON
+      if (fsError.code === 'INVALID_JSON') {
+        console.error(`[API] ❌ INVALID JSON`);
+        return NextResponse.json(
+          { 
+            ...API_ERROR_MESSAGES.INVALID_JSON,
+            details: fsError.helpMessage || API_ERROR_MESSAGES.INVALID_JSON.details,
+            code: 'INVALID_JSON'
+          },
+          { status: 500 }
+        );
+      }
+    }
+    
+    // Check for specific error types (legacy MongoDB errors, kept for compatibility)
     if (error.message.includes('Cast to ObjectId failed')) {
       return NextResponse.json(
-        { error: 'Invalid ID format' },
+        API_ERROR_MESSAGES.INVALID_ID,
         { status: 400 }
       );
     }
     
     if (error.message.includes('duplicate key')) {
       return NextResponse.json(
-        { error: 'Resource already exists' },
+        API_ERROR_MESSAGES.RESOURCE_EXISTS,
         { status: 409 }
       );
     }
     
     if (error.message.includes('validation failed')) {
       return NextResponse.json(
-        { error: 'Validation error', details: error.message },
+        { ...API_ERROR_MESSAGES.VALIDATION_FAILED, details: error.message },
         { status: 400 }
       );
     }
   }
   
   return NextResponse.json(
-    { error: 'Internal server error', context },
+    { ...API_ERROR_MESSAGES.INTERNAL_ERROR, context },
     { status: 500 }
   );
 }

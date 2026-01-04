@@ -9,6 +9,7 @@ import {
   HiAcademicCap,
 } from 'react-icons/hi';
 import { authenticatedFetch } from '@/lib/client-api-helpers';
+import { UI_ERROR_MESSAGES_FR } from '@/lib/error-messages';
 
 interface Skill {
   category: string;
@@ -88,14 +89,21 @@ export default function AdminAboutPage() {
         body: JSON.stringify(data),
       });
 
+      const result = await res.json();
+      
       if (res.ok) {
-        alert('Enregistré avec succès !');
+        alert(UI_ERROR_MESSAGES_FR.SAVE_SUCCESS);
       } else {
-        alert('Erreur lors de l\'enregistrement');
+        // Check if it's a read-only filesystem error
+        if (result.isReadOnly) {
+          alert(UI_ERROR_MESSAGES_FR.READ_ONLY_FILESYSTEM);
+        } else {
+          alert(UI_ERROR_MESSAGES_FR.SAVE_ERROR(result.error || 'Erreur inconnue', result.details || ''));
+        }
       }
     } catch (error) {
       console.error('Error saving:', error);
-      alert('Une erreur est survenue');
+      alert(UI_ERROR_MESSAGES_FR.GENERAL_ERROR);
     } finally {
       setSaving(false);
     }
