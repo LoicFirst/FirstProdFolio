@@ -125,6 +125,7 @@ export async function closeConnection(): Promise<void> {
 
 /**
  * Health check for MongoDB connection
+ * Note: This function reuses the cached connection from connectToDatabase()
  */
 export async function checkConnection(): Promise<boolean> {
   try {

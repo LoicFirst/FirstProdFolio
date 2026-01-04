@@ -56,12 +56,18 @@ export async function POST(request: NextRequest) {
     const count = await collection.countDocuments();
     const id = `video-${String(count + 1).padStart(3, '0')}-${Date.now()}`;
 
-    const newVideo: Omit<VideoDocument, '_id'> = {
-      ...body,
+    const newVideo: VideoDocument = {
       id,
+      title: body.title,
+      description: body.description,
+      video_url: body.video_url,
+      ...(body.year && { year: body.year }),
+      ...(body.thumbnail_url && { thumbnail_url: body.thumbnail_url }),
+      ...(body.duration && { duration: body.duration }),
+      ...(body.category && { category: body.category }),
     };
 
-    await collection.insertOne(newVideo as VideoDocument);
+    await collection.insertOne(newVideo);
 
     console.log('[API] ✓ Video created successfully in MongoDB:', newVideo.id);
     return NextResponse.json({ video: newVideo }, { status: 201 });

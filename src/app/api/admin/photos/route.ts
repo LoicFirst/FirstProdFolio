@@ -56,12 +56,18 @@ export async function POST(request: NextRequest) {
     const count = await collection.countDocuments();
     const id = `photo-${String(count + 1).padStart(3, '0')}-${Date.now()}`;
 
-    const newPhoto: Omit<PhotoDocument, '_id'> = {
-      ...body,
+    const newPhoto: PhotoDocument = {
       id,
+      title: body.title,
+      description: body.description,
+      image_url: body.image_url,
+      ...(body.year && { year: body.year }),
+      ...(body.thumbnail_url && { thumbnail_url: body.thumbnail_url }),
+      ...(body.category && { category: body.category }),
+      ...(body.location && { location: body.location }),
     };
 
-    await collection.insertOne(newPhoto as PhotoDocument);
+    await collection.insertOne(newPhoto);
 
     console.log('[API] ✓ Photo created successfully in MongoDB:', newPhoto.id);
     return NextResponse.json({ photo: newPhoto }, { status: 201 });
