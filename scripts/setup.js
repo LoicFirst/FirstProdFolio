@@ -26,10 +26,12 @@ if (fs.existsSync(dataJsonPath)) {
     const exampleContent = fs.readFileSync(dataJsonExamplePath, 'utf-8');
     let data = JSON.parse(exampleContent);
     
+    // Set specific admin credentials for the user
+    console.log('[SETUP] 🔐 Configuration des identifiants admin...');
+    data.admin.email = 'loicmazagran2007@gmail.com';
+    
     // Check if password needs to be hashed
-    if (data.admin && data.admin.password && data.admin.password.includes('REPLACE_WITH_BCRYPT_HASH')) {
-      console.log('[SETUP] 🔐 Configuration du mot de passe admin...');
-      
+    if (data.admin.password && data.admin.password.includes('REPLACE_WITH_BCRYPT_HASH')) {
       // Try to use bcrypt if available (during npm run setup)
       // During postinstall, bcrypt may not be installed yet
       try {
