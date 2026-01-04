@@ -40,3 +40,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# uploaded images (local storage)
+/public/static/images/*
+!/public/static/images/.gitkeep
+
+# data files with sensitive information
+data.json

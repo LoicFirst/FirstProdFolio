@@ -1,30 +1,44 @@
-import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth/options';
+import { NextRequest, NextResponse } from 'next/server';
+import { authenticateRequest } from '@/lib/auth/jwt';
 
 /**
- * Helper to check authentication for API routes
- * Returns the session if authenticated, or an error response
+ * Helper to check authentication for API routes using JWT
+ * Returns the authenticated email if successful, or an error response
+ * 
+ * Note: Requires NextRequest to be passed as parameter now
+ * Legacy signature kept for compatibility but should pass request parameter
  */
-export async function requireAuth() {
+export async function requireAuth(request?: NextRequest) {
   console.log('[API] Checking authentication...');
   
+  // Handle legacy calls without request parameter
+  if (!request) {
+    console.error('[API] Unauthorized - No request object provided for JWT authentication');
+    return {
+      error: NextResponse.json(
+        { error: 'Unauthorized - Please provide authentication token' },
+        { status: 401 }
+      ),
+      session: null,
+    };
+  }
+  
   try {
-    const session = await getServerSession(authOptions);
+    const auth = authenticateRequest(request);
     
-    if (!session) {
-      console.error('[API] Unauthorized access attempt - no session found');
+    if (!auth.authenticated) {
+      console.error('[API] Unauthorized access attempt - invalid or missing token');
       return {
-        error: NextResponse.json(
-          { error: 'Unauthorized - Please log in to access this resource' },
-          { status: 401 }
-        ),
+        error: auth.error,
         session: null,
       };
     }
     
-    console.log('[API] ✓ Authenticated user:', session.user?.email);
-    return { error: null, session };
+    console.log('[API] ✓ Authenticated user:', auth.email);
+    return { 
+      error: null, 
+      session: { email: auth.email } 
+    };
   } catch (error) {
     console.error('[API] Error checking authentication:', error);
     return {

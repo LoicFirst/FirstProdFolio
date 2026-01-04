@@ -1,110 +1,45 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { signIn, useSession } from 'next-auth/react';
-import { useSearchParams } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { HiLockClosed, HiMail, HiEye, HiEyeOff, HiExclamationCircle } from 'react-icons/hi';
-
-// Helper to get initial error state from URL
-function getInitialErrors(searchParams: URLSearchParams): { error: string; configError: string } {
-  const urlError = searchParams.get('error');
-  if (!urlError) return { error: '', configError: '' };
-  
-  if (urlError === 'Configuration') {
-    return {
-      error: '',
-      configError: 'Erreur de configuration du serveur. Veuillez vérifier que les variables d\'environnement NEXTAUTH_SECRET, NEXTAUTH_URL et MONGODB_URI sont correctement configurées sur Vercel.',
-    };
-  } else if (urlError === 'CredentialsSignin') {
-    return { error: 'Email ou mot de passe incorrect', configError: '' };
-  } else if (urlError.includes('database') || urlError.includes('MongoDB') || urlError.includes('MONGODB_URI')) {
-    // Handle database-specific errors with more details
-    return {
-      error: '',
-      configError: `Erreur de base de données: ${urlError}`,
-    };
-  } else {
-    return { error: 'Une erreur est survenue lors de la connexion', configError: '' };
-  }
-}
+import { HiLockClosed, HiMail, HiEye, HiEyeOff } from 'react-icons/hi';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function AdminLoginPage() {
-  const searchParams = useSearchParams();
-  const initialErrors = useMemo(() => getInitialErrors(searchParams), [searchParams]);
+  const router = useRouter();
+  const { login, isAuthenticated, isLoading: authLoading } = useAuth();
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState(initialErrors.error);
-  const [configError, setConfigError] = useState(initialErrors.configError);
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { status } = useSession();
-
-  // Clear URL error params after reading them
-  useEffect(() => {
-    if (searchParams.get('error')) {
-      window.history.replaceState({}, '', '/admin/login');
-    }
-  }, [searchParams]);
 
   // Redirect to dashboard if already authenticated
   useEffect(() => {
-    if (status === 'authenticated') {
-      window.location.href = '/admin/dashboard';
+    if (isAuthenticated && !authLoading) {
+      router.push('/admin/dashboard');
     }
-  }, [status]);
+  }, [isAuthenticated, authLoading, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setConfigError('');
     setLoading(true);
 
     console.log('[LOGIN] Attempting login for email:', email);
 
     try {
-      const result = await signIn('credentials', {
-        email,
-        password,
-        redirect: false,
-      });
+      const result = await login(email, password);
 
-      console.log('[LOGIN] SignIn result:', result);
-
-      if (result?.error) {
+      if (!result.success) {
         console.error('[LOGIN] Authentication failed:', result.error);
-        
-        // Provide more specific error messages based on error type
-        if (result.error === 'CredentialsSignin' || result.error === 'Invalid credentials') {
-          setError('Email ou mot de passe incorrect. Vérifiez vos identifiants et réessayez.');
-        } else if (result.error.includes('MONGODB_URI validation failed')) {
-          // Extract the specific validation error
-          const validationError = result.error.replace('MONGODB_URI validation failed: ', '');
-          setConfigError(`Erreur de format MONGODB_URI: ${validationError}`);
-        } else if (result.error.includes('authentication failed') || result.error.includes('auth failed')) {
-          setConfigError('Erreur d\'authentification MongoDB. Vérifiez le nom d\'utilisateur et le mot de passe dans MONGODB_URI.');
-        } else if (result.error.includes('host not found') || result.error.includes('ENOTFOUND')) {
-          setConfigError('Impossible de trouver le serveur MongoDB. Vérifiez l\'adresse du cluster dans MONGODB_URI.');
-        } else if (result.error.includes('timed out') || result.error.includes('ETIMEDOUT')) {
-          setConfigError('Délai de connexion MongoDB expiré. Vérifiez la connectivité réseau et la liste blanche IP sur MongoDB Atlas.');
-        } else if (result.error.includes('Invalid connection string') || result.error.includes('URI')) {
-          setConfigError('Format de connexion MongoDB invalide. Vérifiez la syntaxe de MONGODB_URI.');
-        } else if (result.error.includes('Cannot reach MongoDB server')) {
-          setConfigError('Impossible de joindre le serveur MongoDB. Vérifiez la configuration MongoDB Atlas et l\'accès réseau.');
-        } else if (result.error.includes('database') || result.error.includes('MongoDB') || result.error.includes('connect')) {
-          setConfigError(`Erreur de connexion à la base de données: ${result.error}`);
-        } else if (result.error.includes('environment') || result.error.includes('configuration') || result.error.includes('not defined')) {
-          setConfigError(`Erreur de configuration: ${result.error}`);
-        } else {
-          setError('Une erreur est survenue lors de la connexion. Consultez les logs du serveur pour plus de détails.');
-        }
+        setError(result.error || 'Email ou mot de passe incorrect');
         setLoading(false);
       } else {
         console.log('[LOGIN] ✓ Authentication successful, redirecting to dashboard...');
-        // Use window.location for a full page navigation to ensure
-        // the session is properly established before rendering the dashboard
-        window.location.href = '/admin/dashboard';
+        router.push('/admin/dashboard');
       }
     } catch (err) {
       console.error('[LOGIN] Unexpected error during login:', err);
@@ -114,13 +49,13 @@ export default function AdminLoginPage() {
   };
 
   // Show loading state while checking session or if already authenticated
-  if (status === 'loading' || status === 'authenticated') {
+  if (authLoading || isAuthenticated) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto" />
           <p className="text-gray-400 mt-4">
-            {status === 'authenticated' ? 'Redirection...' : 'Chargement...'}
+            {isAuthenticated ? 'Redirection...' : 'Chargement...'}
           </p>
         </div>
       </div>
@@ -144,23 +79,6 @@ export default function AdminLoginPage() {
             <h1 className="text-2xl font-bold text-white">Admin Panel</h1>
             <p className="text-gray-400 mt-2">Connectez-vous pour gérer votre portfolio</p>
           </div>
-
-          {/* Configuration Error */}
-          {configError && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4 mb-6"
-            >
-              <div className="flex items-start gap-3">
-                <HiExclamationCircle className="w-6 h-6 text-yellow-500 flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-yellow-500 text-sm font-medium mb-2">Erreur de configuration</p>
-                  <p className="text-yellow-400/80 text-xs">{configError}</p>
-                </div>
-              </div>
-            </motion.div>
-          )}
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">

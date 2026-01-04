@@ -1,0 +1,7 @@
+{
+  "projects": [],
+  "admin": {
+    "email": "your-admin-email@example.com",
+    "password": "$2b$10$REPLACE_WITH_BCRYPT_HASH_OF_YOUR_PASSWORD"
+  }
+}
