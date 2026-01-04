@@ -41,5 +41,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Database files - DO NOT COMMIT
+# uploaded images (local storage)
+/public/static/images/*
+!/public/static/images/.gitkeep
+
+# data files with sensitive information
 data.json

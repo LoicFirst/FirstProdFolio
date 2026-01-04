@@ -8,7 +8,7 @@ console.log('========================================');
 console.log('🚀 Configuration automatique du portfolio');
 console.log('========================================\n');
 
-// Step 1: Copy data.json.example to data.json
+// Step 1: Copy data.json.example to data.json and set proper credentials
 console.log('[SETUP] Étape 1: Configuration de data.json');
 const dataJsonExamplePath = path.join(process.cwd(), 'data.json.example');
 const dataJsonPath = path.join(process.cwd(), 'data.json');
@@ -22,8 +22,33 @@ if (fs.existsSync(dataJsonPath)) {
   console.log('[SETUP] ⚠️  data.json existe déjà, conservation du fichier existant');
 } else {
   try {
-    fs.copyFileSync(dataJsonExamplePath, dataJsonPath);
+    // Read the example file
+    const exampleContent = fs.readFileSync(dataJsonExamplePath, 'utf-8');
+    let data = JSON.parse(exampleContent);
+    
+    // Check if password needs to be hashed
+    if (data.admin && data.admin.password && data.admin.password.includes('REPLACE_WITH_BCRYPT_HASH')) {
+      console.log('[SETUP] 🔐 Configuration du mot de passe admin...');
+      
+      // Try to use bcrypt if available (during npm run setup)
+      // During postinstall, bcrypt may not be installed yet
+      try {
+        const bcrypt = require('bcryptjs');
+        const defaultPassword = 'CRyTDXCGhADE4';
+        const hashedPassword = bcrypt.hashSync(defaultPassword, 10);
+        data.admin.password = hashedPassword;
+        console.log('[SETUP] ✓ Mot de passe hashé généré avec bcrypt');
+      } catch (bcryptError) {
+        // Bcrypt not available, use pre-computed hash
+        console.log('[SETUP] ℹ️  Utilisation du hash pré-calculé (bcrypt non disponible pendant postinstall)');
+        data.admin.password = '$2b$10$3UR3vsM9IYKjysxqjzEje.vOgopIJzisqbIbaePnw7VeaGZt8oplC';
+      }
+    }
+    
+    // Write the configured data.json
+    fs.writeFileSync(dataJsonPath, JSON.stringify(data, null, 2), 'utf-8');
     console.log('[SETUP] ✅ data.json créé avec succès depuis data.json.example');
+    console.log('[SETUP] ℹ️  Identifiants admin configurés: ' + data.admin.email);
   } catch (error) {
     console.error('[ERROR] ❌ Impossible de copier data.json.example:', error.message);
     process.exit(1);

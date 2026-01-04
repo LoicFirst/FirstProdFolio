@@ -2,18 +2,40 @@
 
 ## Configuration initiale requise
 
-Pour que l'authentification fonctionne, vous devez créer un fichier `data.json` à la racine du projet.
+Pour que l'authentification fonctionne, le projet utilise un script de configuration automatique.
 
-### Étapes de configuration :
+### Installation automatique :
 
-1. **Copiez le fichier d'exemple** :
-   ```bash
-   cp data.json.example data.json
-   ```
+```bash
+# Étape 1 : Installer les dépendances (le script setup s'exécute automatiquement)
+npm install
 
-2. **Le fichier `data.json` contient** :
-   - Les identifiants administrateur (email et mot de passe hashé)
-   - Les projets du portfolio
+# Étape 2 : Lancer le serveur
+npm run dev
+```
+
+Le script `postinstall` configure automatiquement :
+- ✅ Crée `data.json` depuis `data.json.example`
+- ✅ Génère le hash bcrypt pour le mot de passe admin par défaut
+- ✅ Génère un `JWT_SECRET` sécurisé dans `.env.local`
+- ✅ Valide la structure des fichiers
+
+### Identifiants par défaut
+
+Le script configure automatiquement les identifiants suivants dans `data.json` :
+
+- **Email** : `loicmazagran2007@gmail.com`
+- **Mot de passe** : `CRyTDXCGhADE4`
+
+⚠️ **Important** : Ces identifiants sont configurés automatiquement lors de l'installation. Le mot de passe est hashé avec bcrypt.
+
+### Reconfiguration manuelle
+
+Si vous souhaitez reconfigurer le projet :
+
+```bash
+npm run setup
+```
 
 ### Structure du fichier data.json
 
