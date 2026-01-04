@@ -68,9 +68,15 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('[API] Error reading reviews from MongoDB:', error);
     
+    // Return empty array instead of error - client will use sample reviews
     return NextResponse.json(
-      { error: 'Failed to fetch reviews', reviews: [] },
-      { status: 500 }
+      { reviews: [], pagination: { page: 1, limit: 10, totalCount: 0, totalPages: 0, hasMore: false } },
+      {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+          'Pragma': 'no-cache',
+        },
+      }
     );
   }
 }

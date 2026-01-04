@@ -122,9 +122,6 @@ export default function Home() {
       {/* Featured Content Section */}
       <FeaturedContent videos={videosData.videos} photos={photosData.photos} />
 
-      {/* Client Reviews Section */}
-      <ClientReviews />
-
       {/* About Teaser */}
       <section className="py-20 bg-black">
         <div className="container mx-auto px-6">
@@ -174,6 +171,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Client Reviews Section - After À propos de moi */}
+      <ClientReviews />
 
       {/* Contact CTA */}
       <section className="py-20 bg-gradient-to-br from-gray-900 to-black">

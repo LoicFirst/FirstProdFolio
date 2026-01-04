@@ -49,22 +49,22 @@ export default function LightWaveEffect({ enabled = true }: LightWaveEffectProps
 
       const { x, y } = mouseRef.current;
 
-      // Create gradient
-      const gradient = ctx.createRadialGradient(x, y, 0, x, y, 400);
+      // Create larger gradient for better visibility across the page
+      const gradient = ctx.createRadialGradient(x, y, 0, x, y, 600);
       
-      // Primary color wave (blue)
-      gradient.addColorStop(0, 'rgba(52, 152, 219, 0.15)');
-      gradient.addColorStop(0.3, 'rgba(52, 152, 219, 0.08)');
-      gradient.addColorStop(0.6, 'rgba(46, 204, 113, 0.04)');
+      // Primary color wave (blue) - increased opacity for better visibility
+      gradient.addColorStop(0, 'rgba(52, 152, 219, 0.25)');
+      gradient.addColorStop(0.2, 'rgba(52, 152, 219, 0.15)');
+      gradient.addColorStop(0.5, 'rgba(46, 204, 113, 0.08)');
       gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
 
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Secondary smaller glow
-      const innerGradient = ctx.createRadialGradient(x, y, 0, x, y, 150);
-      innerGradient.addColorStop(0, 'rgba(52, 152, 219, 0.1)');
-      innerGradient.addColorStop(0.5, 'rgba(155, 89, 182, 0.05)');
+      // Secondary smaller glow - increased visibility
+      const innerGradient = ctx.createRadialGradient(x, y, 0, x, y, 250);
+      innerGradient.addColorStop(0, 'rgba(52, 152, 219, 0.2)');
+      innerGradient.addColorStop(0.4, 'rgba(155, 89, 182, 0.1)');
       innerGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
 
       ctx.fillStyle = innerGradient;
@@ -132,10 +132,11 @@ export default function LightWaveEffect({ enabled = true }: LightWaveEffectProps
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 pointer-events-none z-0"
+      className="fixed inset-0 pointer-events-none z-[5]"
       style={{ 
         opacity: isVisible ? 1 : 0,
-        transition: 'opacity 0.5s ease-out'
+        transition: 'opacity 0.5s ease-out',
+        mixBlendMode: 'screen',
       }}
       aria-hidden="true"
     />
