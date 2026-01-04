@@ -21,8 +21,22 @@ export async function GET() {
     return NextResponse.json(data);
   } catch (error) {
     console.error('[API] Error reading contact data from filesystem:', error);
+    
+    // Provide specific error details
+    let errorMessage = 'Failed to fetch contact data';
+    if (error instanceof Error && 'code' in error) {
+      const fsError = error as NodeJS.ErrnoException;
+      if (fsError.code === 'ENOENT') {
+        errorMessage = 'Contact data file not found';
+      } else if (fsError.code === 'EACCES') {
+        errorMessage = 'Permission denied accessing contact data';
+      }
+    } else if (error instanceof SyntaxError) {
+      errorMessage = 'Contact data file contains invalid JSON';
+    }
+    
     return NextResponse.json(
-      { error: 'Failed to fetch contact data' },
+      { error: errorMessage },
       { status: 500 }
     );
   }

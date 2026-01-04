@@ -32,8 +32,24 @@ interface AboutData {
 
 // Helper to read about from JSON file
 function readAbout(): AboutData {
-  const content = fs.readFileSync(ABOUT_FILE_PATH, 'utf-8');
-  return JSON.parse(content) as AboutData;
+  try {
+    const content = fs.readFileSync(ABOUT_FILE_PATH, 'utf-8');
+    return JSON.parse(content) as AboutData;
+  } catch (error) {
+    console.error('[API] Error reading about file:', error);
+    if (error instanceof Error && 'code' in error) {
+      const fsError = error as NodeJS.ErrnoException;
+      if (fsError.code === 'ENOENT') {
+        throw new Error(`About file not found at ${ABOUT_FILE_PATH}`);
+      } else if (fsError.code === 'EACCES') {
+        throw new Error(`Permission denied reading about file at ${ABOUT_FILE_PATH}`);
+      }
+    }
+    if (error instanceof SyntaxError) {
+      throw new Error(`Invalid JSON in about file at ${ABOUT_FILE_PATH}`);
+    }
+    throw error;
+  }
 }
 
 // Helper to write about to JSON file

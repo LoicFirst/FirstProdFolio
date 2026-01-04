@@ -21,8 +21,22 @@ export async function GET() {
     return NextResponse.json({ videos: data.videos || [] });
   } catch (error) {
     console.error('[API] Error reading videos from filesystem:', error);
+    
+    // Provide specific error details
+    let errorMessage = 'Failed to fetch videos';
+    if (error instanceof Error && 'code' in error) {
+      const fsError = error as NodeJS.ErrnoException;
+      if (fsError.code === 'ENOENT') {
+        errorMessage = 'Videos data file not found';
+      } else if (fsError.code === 'EACCES') {
+        errorMessage = 'Permission denied accessing videos data';
+      }
+    } else if (error instanceof SyntaxError) {
+      errorMessage = 'Videos data file contains invalid JSON';
+    }
+    
     return NextResponse.json(
-      { error: 'Failed to fetch videos', videos: [] },
+      { error: errorMessage, videos: [] },
       { status: 500 }
     );
   }

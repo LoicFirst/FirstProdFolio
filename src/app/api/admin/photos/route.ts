@@ -22,8 +22,24 @@ interface PhotosData {
 
 // Helper to read photos from JSON file
 function readPhotos(): PhotosData {
-  const content = fs.readFileSync(PHOTOS_FILE_PATH, 'utf-8');
-  return JSON.parse(content) as PhotosData;
+  try {
+    const content = fs.readFileSync(PHOTOS_FILE_PATH, 'utf-8');
+    return JSON.parse(content) as PhotosData;
+  } catch (error) {
+    console.error('[API] Error reading photos file:', error);
+    if (error instanceof Error && 'code' in error) {
+      const fsError = error as NodeJS.ErrnoException;
+      if (fsError.code === 'ENOENT') {
+        throw new Error(`Photos file not found at ${PHOTOS_FILE_PATH}`);
+      } else if (fsError.code === 'EACCES') {
+        throw new Error(`Permission denied reading photos file at ${PHOTOS_FILE_PATH}`);
+      }
+    }
+    if (error instanceof SyntaxError) {
+      throw new Error(`Invalid JSON in photos file at ${PHOTOS_FILE_PATH}`);
+    }
+    throw error;
+  }
 }
 
 // Helper to write photos to JSON file

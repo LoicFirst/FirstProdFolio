@@ -21,8 +21,22 @@ export async function GET() {
     return NextResponse.json({ photos: data.photos || [] });
   } catch (error) {
     console.error('[API] Error reading photos from filesystem:', error);
+    
+    // Provide specific error details
+    let errorMessage = 'Failed to fetch photos';
+    if (error instanceof Error && 'code' in error) {
+      const fsError = error as NodeJS.ErrnoException;
+      if (fsError.code === 'ENOENT') {
+        errorMessage = 'Photos data file not found';
+      } else if (fsError.code === 'EACCES') {
+        errorMessage = 'Permission denied accessing photos data';
+      }
+    } else if (error instanceof SyntaxError) {
+      errorMessage = 'Photos data file contains invalid JSON';
+    }
+    
     return NextResponse.json(
-      { error: 'Failed to fetch photos', photos: [] },
+      { error: errorMessage, photos: [] },
       { status: 500 }
     );
   }

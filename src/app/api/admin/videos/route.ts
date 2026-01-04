@@ -22,8 +22,24 @@ interface VideosData {
 
 // Helper to read videos from JSON file
 function readVideos(): VideosData {
-  const content = fs.readFileSync(VIDEOS_FILE_PATH, 'utf-8');
-  return JSON.parse(content) as VideosData;
+  try {
+    const content = fs.readFileSync(VIDEOS_FILE_PATH, 'utf-8');
+    return JSON.parse(content) as VideosData;
+  } catch (error) {
+    console.error('[API] Error reading videos file:', error);
+    if (error instanceof Error && 'code' in error) {
+      const fsError = error as NodeJS.ErrnoException;
+      if (fsError.code === 'ENOENT') {
+        throw new Error(`Videos file not found at ${VIDEOS_FILE_PATH}`);
+      } else if (fsError.code === 'EACCES') {
+        throw new Error(`Permission denied reading videos file at ${VIDEOS_FILE_PATH}`);
+      }
+    }
+    if (error instanceof SyntaxError) {
+      throw new Error(`Invalid JSON in videos file at ${VIDEOS_FILE_PATH}`);
+    }
+    throw error;
+  }
 }
 
 // Helper to write videos to JSON file
