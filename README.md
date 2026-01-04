@@ -54,20 +54,107 @@ src/
 └── types/                 # Types TypeScript
 ```
 
-## 🛠️ Installation
+## 🛠️ Installation et Configuration Automatique
+
+Le projet inclut un script de configuration automatique qui s'exécute lors de l'installation.
+
+### Installation Simple (3 étapes)
 
 ```bash
-# Cloner le repository
+# 1. Cloner le repository
 git clone https://github.com/LoicFirst/FirstProdFolio.git
+cd FirstProdFolio
 
-# Installer les dépendances
+# 2. Installer les dépendances (la configuration se fait automatiquement)
 npm install
 
-# Lancer le serveur de développement
+# 3. Démarrer le serveur
 npm run dev
 ```
 
-Le site sera accessible à l'adresse [http://localhost:3000](http://localhost:3000).
+Le script de configuration automatique (`postinstall`) va :
+- ✅ Créer `data.json` depuis `data.json.example` (si nécessaire)
+- ✅ Générer et configurer `JWT_SECRET` dans `.env.local` (si nécessaire)
+- ✅ Valider la structure des fichiers de configuration
+
+Le site sera accessible à [http://localhost:3000](http://localhost:3000).
+
+### Configuration Manuelle (optionnelle)
+
+Si vous souhaitez reconfigurer le projet :
+
+```bash
+npm run setup
+```
+
+## 📊 Logs et Debugging
+
+L'application utilise des logs détaillés avec des préfixes spécifiques pour faciliter le debugging.
+
+### Préfixes de Logs
+
+| Préfixe | Description | Exemple |
+|---------|-------------|---------|
+| `[AUTH]` | Authentification et login | `[AUTH] ✅ LOGIN SUCCESSFUL` |
+| `[JSON-DB]` | Opérations de base de données | `[JSON-DB] ✓ Data written successfully` |
+| `[ERROR]` | Erreurs critiques | `[ERROR] ❌ data.json file not found` |
+| `[SETUP]` | Configuration initiale | `[SETUP] ✅ Configuration terminée` |
+
+### Exemples de Logs d'Authentification
+
+**Connexion réussie :**
+```
+[AUTH] ========================================
+[AUTH] Admin login attempt started
+[AUTH] Credentials received
+[AUTH] ✓ Successfully loaded admin data from JSON file
+[AUTH] ✓ Email matches
+[AUTH] ✓ Password verified successfully
+[AUTH] ✅ LOGIN SUCCESSFUL
+[AUTH] ========================================
+```
+
+**Erreur d'authentification :**
+```
+[AUTH] ⚠️  Authentication failed: Invalid password
+```
+
+### Exemples de Logs Base de Données
+
+```
+[JSON-DB] Reading data from: /path/to/data.json
+[JSON-DB] ✓ File read successfully
+[JSON-DB] ✓ JSON parsed successfully
+[JSON-DB] Data structure check:
+[JSON-DB]   - admin exists: true
+[JSON-DB]   - projects count: 5
+```
+
+## 🔐 Authentification Admin
+
+### Identifiants par Défaut
+
+Les identifiants admin sont pré-configurés dans `data.json.example` :
+
+- **Email :** `loicmazagran2007@gmail.com`
+- **Mot de passe :** `CRyTDXCGhADE4`
+
+### Connexion
+
+1. Accédez à `/admin/login`
+2. Entrez vos identifiants
+3. Consultez les logs serveur pour le détail de l'authentification
+
+### Modifier les Identifiants
+
+Pour changer le mot de passe admin :
+
+```bash
+# Générer un nouveau hash bcrypt
+node -e "const bcrypt = require('bcryptjs'); bcrypt.hash('VOTRE_NOUVEAU_MOT_DE_PASSE', 10, (err, hash) => { console.log('Hash:', hash); });"
+
+# Copier le hash dans data.json
+```
 
 ## 📝 Configuration du contenu
 

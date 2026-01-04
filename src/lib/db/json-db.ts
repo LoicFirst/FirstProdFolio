@@ -55,14 +55,54 @@ export interface DatabaseData {
  * Read data from JSON file
  */
 export function readData(): DatabaseData {
+  console.log('[JSON-DB] Reading data from:', DATA_FILE_PATH);
+  
   try {
+    // Check if file exists
+    if (!fs.existsSync(DATA_FILE_PATH)) {
+      console.error('[JSON-DB] CRITICAL ERROR: data.json file does not exist');
+      console.error('[JSON-DB] Expected path:', DATA_FILE_PATH);
+      console.error('[JSON-DB] Please create data.json from data.json.example');
+      console.error('[JSON-DB] Instructions:');
+      console.error('[JSON-DB]   1. Copy data.json.example to data.json');
+      console.error('[JSON-DB]   2. Update admin credentials in data.json');
+      throw new Error('data.json file not found. Please create it from data.json.example with your own credentials.');
+    }
+    
     const fileContent = fs.readFileSync(DATA_FILE_PATH, 'utf-8');
-    return JSON.parse(fileContent);
+    console.log('[JSON-DB] ✓ File read successfully, length:', fileContent.length);
+    
+    const parsedData = JSON.parse(fileContent);
+    console.log('[JSON-DB] ✓ JSON parsed successfully');
+    console.log('[JSON-DB] Data structure check:');
+    console.log('[JSON-DB]   - admin exists:', !!parsedData.admin);
+    console.log('[JSON-DB]   - admin.email exists:', !!parsedData.admin?.email);
+    console.log('[JSON-DB]   - admin.password exists:', !!parsedData.admin?.password);
+    console.log('[JSON-DB]   - projects exists:', !!parsedData.projects);
+    console.log('[JSON-DB]   - projects count:', parsedData.projects?.length || 0);
+    
+    return parsedData;
   } catch (error) {
-    console.error('[JSON-DB] Error reading data file:', error);
-    console.error('[JSON-DB] Please create data.json from data.json.example');
-    // Throw error instead of returning default to prevent accidental use without proper setup
-    throw new Error('data.json file not found. Please create it from data.json.example with your own credentials.');
+    console.error('[JSON-DB] ========================================');
+    console.error('[JSON-DB] ERROR reading data file');
+    console.error('[JSON-DB] Error type:', error instanceof Error ? error.constructor.name : typeof error);
+    console.error('[JSON-DB] Error message:', error instanceof Error ? error.message : String(error));
+    if (error instanceof Error && error.stack) {
+      console.error('[JSON-DB] Stack trace:', error.stack);
+    }
+    console.error('[JSON-DB] ========================================');
+    
+    // Provide helpful error messages
+    if (error instanceof SyntaxError) {
+      console.error('[JSON-DB] The data.json file contains invalid JSON syntax');
+      console.error('[JSON-DB] Please check for:');
+      console.error('[JSON-DB]   - Missing commas between properties');
+      console.error('[JSON-DB]   - Missing quotes around strings');
+      console.error('[JSON-DB]   - Trailing commas');
+      throw new Error('data.json file contains invalid JSON syntax. Please check the file format.');
+    }
+    
+    throw new Error('data.json file not found or cannot be read. Please create it from data.json.example with your own credentials.');
   }
 }
 
