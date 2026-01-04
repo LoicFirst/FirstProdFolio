@@ -10,11 +10,7 @@ import {
   HiRefresh,
 } from 'react-icons/hi';
 import { authenticatedFetch } from '@/lib/client-api-helpers';
-
-interface SiteSettings {
-  lightWaveEffect: boolean;
-  reviewsEnabled: boolean;
-}
+import { SiteSettings } from '@/types';
 
 export default function AdminSettingsPage() {
   const [settings, setSettings] = useState<SiteSettings>({

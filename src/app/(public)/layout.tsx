@@ -13,7 +13,7 @@ function PublicLayoutContent({ children }: { children: React.ReactNode }) {
     <>
       {!isLoading && <LightWaveEffect enabled={settings.lightWaveEffect} />}
       <Header />
-      <main className="pt-16 relative z-10">
+      <main id="main-content" className="pt-16 relative z-10" role="main">
         {children}
       </main>
       <Footer />

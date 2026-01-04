@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import Image from 'next/image';
 import { HiStar, HiUser, HiArrowRight, HiChevronLeft, HiChevronRight } from 'react-icons/hi';
 
 interface Review {
@@ -132,12 +133,16 @@ export default function ClientReviews() {
                 <div className="flex items-center gap-4 mb-4">
                   <div className="w-12 h-12 rounded-full bg-gray-800 flex items-center justify-center overflow-hidden flex-shrink-0">
                     {review.photo_url ? (
-                      <div
-                        className="w-full h-full bg-cover bg-center"
-                        style={{ backgroundImage: `url(${review.photo_url})` }}
+                      <Image
+                        src={review.photo_url}
+                        alt={`Photo de ${review.name}`}
+                        width={48}
+                        height={48}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
                       />
                     ) : (
-                      <HiUser className="w-6 h-6 text-gray-600" />
+                      <HiUser className="w-6 h-6 text-gray-600" aria-hidden="true" />
                     )}
                   </div>
                   <div>

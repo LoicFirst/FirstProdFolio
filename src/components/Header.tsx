@@ -31,23 +31,33 @@ export default function Header() {
   }, []);
 
   return (
-    <header
-      className={cn(
-        'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
-        isScrolled
-          ? 'bg-black/90 backdrop-blur-md shadow-lg'
-          : 'bg-transparent'
-      )}
-    >
-      <nav className="container mx-auto px-6 py-4">
-        <div className="flex items-center justify-between">
-          {/* Logo */}
-          <Link href="/" className="group">
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              className="text-2xl font-bold text-white"
-            >
-              <span className="text-primary-500">Loic</span>
+    <>
+      {/* Skip Navigation Link for Accessibility */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[60] focus:px-4 focus:py-2 focus:bg-primary-500 focus:text-white focus:rounded-lg focus:outline-none"
+      >
+        Aller au contenu principal
+      </a>
+      
+      <header
+        className={cn(
+          'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
+          isScrolled
+            ? 'bg-black/90 backdrop-blur-md shadow-lg'
+            : 'bg-transparent'
+        )}
+        role="banner"
+      >
+        <nav className="container mx-auto px-6 py-4" aria-label="Navigation principale">
+          <div className="flex items-center justify-between">
+            {/* Logo */}
+            <Link href="/" className="group" aria-label="Accueil - Loic Mazagran">
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                className="text-2xl font-bold text-white"
+              >
+                <span className="text-primary-500">Loic</span>
               <span className="text-white">Mazagran</span>
             </motion.div>
           </Link>
@@ -82,9 +92,11 @@ export default function Header() {
           <button
             className="md:hidden text-white p-2"
             onClick={() => setIsOpen(!isOpen)}
-            aria-label="Toggle menu"
+            aria-label={isOpen ? "Fermer le menu" : "Ouvrir le menu"}
+            aria-expanded={isOpen}
+            aria-controls="mobile-menu"
           >
-            {isOpen ? <HiX size={24} /> : <HiMenu size={24} />}
+            {isOpen ? <HiX size={24} aria-hidden="true" /> : <HiMenu size={24} aria-hidden="true" />}
           </button>
         </div>
 
@@ -92,11 +104,13 @@ export default function Header() {
         <AnimatePresence>
           {isOpen && (
             <motion.div
+              id="mobile-menu"
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.3 }}
               className="md:hidden overflow-hidden"
+              role="menu"
             >
               <div className="py-4 space-y-4">
                 {navLinks.map((link, index) => (
@@ -115,6 +129,7 @@ export default function Header() {
                           ? 'text-primary-500'
                           : 'text-gray-300 hover:text-white'
                       )}
+                      role="menuitem"
                     >
                       {link.label}
                     </Link>
@@ -126,5 +141,6 @@ export default function Header() {
         </AnimatePresence>
       </nav>
     </header>
+    </>
   );
 }

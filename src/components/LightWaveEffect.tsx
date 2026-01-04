@@ -122,6 +122,7 @@ export default function LightWaveEffect({ enabled = true }: LightWaveEffectProps
       
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
+        animationRef.current = undefined;
       }
     };
   }, [enabled]);

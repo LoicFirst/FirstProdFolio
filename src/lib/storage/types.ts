@@ -86,10 +86,13 @@ export interface ReviewDocument extends Document {
   photo_url?: string;
   review_text: string;
   rating?: number;
-  status: 'pending' | 'approved' | 'rejected';
+  status: ReviewStatus;
   created_at: string;
   updated_at: string;
 }
+
+// Review status type
+export type ReviewStatus = 'pending' | 'approved' | 'rejected';
 
 // Site Settings MongoDB document
 export interface SettingsDocument extends MongoDocumentWithId {
