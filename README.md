@@ -205,6 +205,33 @@ Ajoutez une entrée dans `src/data/photos.json` :
 }
 ```
 
+## 🗄️ Base de données MongoDB Atlas
+
+### Configuration de la connexion Atlas SQL
+
+Le projet supporte MongoDB Atlas avec l'interface SQL. Pour configurer et tester votre connexion :
+
+```bash
+# Tester la connexion Atlas SQL
+npm run test:atlas
+```
+
+📚 **Documentation complète** : Consultez [MONGODB_ATLAS_CONNECTION.md](MONGODB_ATLAS_CONNECTION.md) pour :
+- Instructions détaillées de configuration
+- Guide de dépannage des erreurs courantes
+- Meilleures pratiques de sécurité
+- Configuration des accès réseau dans MongoDB Atlas
+
+### Migration des données vers MongoDB
+
+Si vous migrez depuis des fichiers JSON vers MongoDB :
+
+```bash
+npm run migrate:mongodb
+```
+
+📚 **Guide de migration** : Voir [MONGODB_MIGRATION.md](MONGODB_MIGRATION.md)
+
 ## 🚀 Déploiement
 
 ### Vercel (recommandé)

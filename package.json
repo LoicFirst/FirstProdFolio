@@ -9,7 +9,8 @@
     "lint": "eslint",
     "postinstall": "node scripts/setup.js",
     "setup": "node scripts/setup.js",
-    "migrate:mongodb": "node scripts/migrate-to-mongodb.js"
+    "migrate:mongodb": "node scripts/migrate-to-mongodb.js",
+    "test:atlas": "node scripts/test-atlas-connection.js"
   },
   "dependencies": {
     "@types/jsonwebtoken": "^9.0.10",
