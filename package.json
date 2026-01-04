@@ -9,6 +9,7 @@
     "lint": "eslint",
     "postinstall": "node scripts/setup.js",
     "setup": "node scripts/setup.js",
+    "setup:aurora": "node scripts/setup-aurora.js",
     "migrate:mongodb": "node scripts/migrate-to-mongodb.js",
     "test:atlas": "node scripts/test-atlas-connection.js"
   },
