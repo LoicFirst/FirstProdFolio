@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, handleApiError, logApiRequest } from '@/lib/api-helpers';
 import { getSettingsCollection } from '@/lib/storage/database';
+import { cache } from '@/lib/cache';
 
 // Default settings
 const DEFAULT_SETTINGS = {
@@ -73,6 +74,11 @@ export async function PUT(request: NextRequest) {
       },
       { upsert: true }
     );
+
+    // Clear settings-related caches so public site shows updated data
+    cache.clear('public:reviews:settings'); // Clear reviews settings cache only
+    // Note: Settings may affect multiple routes, but they're rarely changed
+    // Consider adding specific cache keys if settings expand
 
     console.log('[API] ✓ Settings updated successfully');
     

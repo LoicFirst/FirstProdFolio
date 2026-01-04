@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, handleApiError, logApiRequest } from '@/lib/api-helpers';
 import { getReviewsCollection } from '@/lib/storage/database';
 import { ReviewDocument } from '@/lib/storage/types';
+import { cache } from '@/lib/cache';
 
 // GET all reviews (admin can see all statuses)
 export async function GET(request: NextRequest) {
@@ -92,6 +93,9 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Review not found' }, { status: 404 });
     }
 
+    // Clear reviews cache so public site shows updated data
+    cache.clearPattern('public:reviews'); // Clear all review-related caches
+
     const updatedReview = { ...updateData, id, updated_at: now };
     console.log('[API] ✓ Review updated successfully in database:', id);
     return NextResponse.json({ review: updatedReview });
@@ -120,6 +124,9 @@ export async function DELETE(request: NextRequest) {
 
     const collection = getReviewsCollection();
     await collection.deleteOne({ id });
+
+    // Clear reviews cache so public site shows updated data
+    cache.clearPattern('public:reviews'); // Clear all review-related caches
 
     console.log('[API] ✓ Review deleted successfully from database:', id);
     return NextResponse.json({ message: 'Review deleted successfully' });
@@ -167,6 +174,9 @@ export async function POST(request: NextRequest) {
         console.error(`[API] Failed to update review ${id}:`, err);
       }
     }
+
+    // Clear reviews cache so public site shows updated data
+    cache.clearPattern('public:reviews'); // Clear all review-related caches
 
     console.log('[API] ✓ Bulk action completed:', modifiedCount, 'reviews updated');
     

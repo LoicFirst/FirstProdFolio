@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, handleApiError, logApiRequest } from '@/lib/api-helpers';
 import { getPhotosCollection } from '@/lib/storage/database';
 import { PhotoDocument } from '@/lib/storage/types';
+import { cache } from '@/lib/cache';
+
+const CACHE_KEY = 'public:photos';
 
 // GET all photos
 export async function GET(request: NextRequest) {
@@ -56,6 +59,9 @@ export async function POST(request: NextRequest) {
 
     await collection.insertOne(newPhoto);
 
+    // Clear cache so public site shows updated data
+    cache.clear(CACHE_KEY);
+
     console.log('[API] ✓ Photo created successfully in database:', newPhoto.id);
     return NextResponse.json({ photo: newPhoto }, { status: 201 });
   } catch (error) {
@@ -92,6 +98,9 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Photo not found' }, { status: 404 });
     }
 
+    // Clear cache so public site shows updated data
+    cache.clear(CACHE_KEY);
+
     const updatedPhoto = { ...updateData, id };
     console.log('[API] ✓ Photo updated successfully in database:', id);
     return NextResponse.json({ photo: updatedPhoto });
@@ -125,6 +134,9 @@ export async function DELETE(request: NextRequest) {
       console.error('[API] Photo not found for deletion:', id);
       return NextResponse.json({ error: 'Photo not found' }, { status: 404 });
     }
+
+    // Clear cache so public site shows updated data
+    cache.clear(CACHE_KEY);
 
     console.log('[API] ✓ Photo deleted successfully from database:', id);
     return NextResponse.json({ message: 'Photo deleted successfully' });

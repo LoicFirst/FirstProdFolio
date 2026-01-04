@@ -1,28 +1,69 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getReviewsCollection, getSettingsCollection } from '@/lib/storage/database';
+import { cache, CACHE_TTL } from '@/lib/cache';
+import { ReviewDocument, SettingsDocument } from '@/lib/storage/types';
+
+const CACHE_KEY_PREFIX = 'public:reviews';
+const CACHE_KEY_SETTINGS = 'public:reviews:settings';
+
+type CleanReview = Omit<ReviewDocument, '_id'>;
+
+interface ReviewsResponse {
+  reviews: CleanReview[];
+  pagination: {
+    page: number;
+    limit: number;
+    totalCount: number;
+    totalPages: number;
+    hasMore: boolean;
+  };
+}
 
 /**
  * GET - Get all approved reviews for public display
- * This route reads from database to show approved client reviews
+ * This route reads from database with caching to ensure good performance
  */
 export async function GET(request: NextRequest) {
   console.log('[API] GET /api/public/reviews');
   
   try {
-    // Check if reviews are enabled
-    const settingsCollection = getSettingsCollection();
-    const settings = await settingsCollection.findOne({ docId: 'main' });
+    // Get pagination parameters
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get('page') || '1', 10);
+    const limit = parseInt(searchParams.get('limit') || '10', 10);
+    const cacheKey = `${CACHE_KEY_PREFIX}:${page}:${limit}`;
+    
+    // Check if reviews are enabled (with caching)
+    let settings = cache.get<SettingsDocument>(CACHE_KEY_SETTINGS);
+    if (!settings) {
+      const settingsCollection = getSettingsCollection();
+      settings = await settingsCollection.findOne({ docId: 'main' });
+      if (settings) {
+        cache.set(CACHE_KEY_SETTINGS, settings, CACHE_TTL.MEDIUM);
+      }
+    }
     
     if (settings && settings.reviewsEnabled === false) {
       return NextResponse.json(
         { reviews: [], message: 'Reviews are currently disabled' },
         {
           headers: {
-            'Cache-Control': 'no-store, no-cache, must-revalidate',
-            'Pragma': 'no-cache',
+            'Cache-Control': 'public, max-age=60',
           },
         }
       );
+    }
+    
+    // Try to get from cache first
+    const cached = cache.get<ReviewsResponse>(cacheKey);
+    if (cached) {
+      console.log('[API] ✓ Returning cached reviews');
+      return NextResponse.json(cached, {
+        headers: {
+          'Cache-Control': 'public, max-age=30, stale-while-revalidate=60',
+          'X-Cache': 'HIT',
+        },
+      });
     }
     
     const collection = getReviewsCollection();
@@ -31,10 +72,6 @@ export async function GET(request: NextRequest) {
     const cursor = await collection.find({ status: 'approved' });
     const allReviews = await cursor.toArray();
     
-    // Get pagination parameters
-    const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page') || '1', 10);
-    const limit = parseInt(searchParams.get('limit') || '10', 10);
     const skip = (page - 1) * limit;
     
     // Sort by created_at descending and paginate
@@ -46,38 +83,57 @@ export async function GET(request: NextRequest) {
     const reviews = sortedReviews.slice(skip, skip + limit);
     
     // Remove database _id field from results
-    const cleanReviews = reviews.map(({ _id, ...review }) => review);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const cleanReviews: CleanReview[] = reviews.map(({ _id, ...review }) => review);
+    
+    const responseData: ReviewsResponse = { 
+      reviews: cleanReviews,
+      pagination: {
+        page,
+        limit,
+        totalCount,
+        totalPages: Math.ceil(totalCount / limit),
+        hasMore: skip + reviews.length < totalCount,
+      }
+    };
+    
+    // Cache the results
+    cache.set(cacheKey, responseData, CACHE_TTL.SHORT);
     
     console.log('[API] ✓ Retrieved', cleanReviews.length, 'approved reviews from database');
     
-    return NextResponse.json(
-      { 
-        reviews: cleanReviews,
-        pagination: {
-          page,
-          limit,
-          totalCount,
-          totalPages: Math.ceil(totalCount / limit),
-          hasMore: skip + reviews.length < totalCount,
-        }
+    return NextResponse.json(responseData, {
+      headers: {
+        'Cache-Control': 'public, max-age=30, stale-while-revalidate=60',
+        'X-Cache': 'MISS',
       },
-      {
-        headers: {
-          'Cache-Control': 'no-store, no-cache, must-revalidate',
-          'Pragma': 'no-cache',
-        },
-      }
-    );
+    });
   } catch (error) {
     console.error('[API] Error reading reviews from database:', error);
+    
+    // Try to return stale cache on error
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get('page') || '1', 10);
+    const limit = parseInt(searchParams.get('limit') || '10', 10);
+    const cacheKey = `${CACHE_KEY_PREFIX}:${page}:${limit}`;
+    const staleCache = cache.get<ReviewsResponse>(cacheKey);
+    
+    if (staleCache) {
+      console.log('[API] ⚠️ Returning stale cache due to error');
+      return NextResponse.json(staleCache, {
+        headers: {
+          'Cache-Control': 'public, max-age=10',
+          'X-Cache': 'STALE',
+        },
+      });
+    }
     
     // Return empty array instead of error - client will use sample reviews
     return NextResponse.json(
       { reviews: [], pagination: { page: 1, limit: 10, totalCount: 0, totalPages: 0, hasMore: false } },
       {
         headers: {
-          'Cache-Control': 'no-store, no-cache, must-revalidate',
-          'Pragma': 'no-cache',
+          'Cache-Control': 'public, max-age=10',
         },
       }
     );
@@ -159,6 +215,9 @@ export async function POST(request: NextRequest) {
     };
     
     await collection.insertOne(newReview);
+    
+    // Note: No cache clearing needed here since new reviews require admin approval
+    // They won't appear on public site until approved, at which point admin route clears cache
     
     console.log('[API] ✓ New review submitted:', id);
     

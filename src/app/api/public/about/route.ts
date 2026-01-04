@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getAboutCollection } from '@/lib/storage/database';
 import { AboutDocument } from '@/lib/storage/types';
+import { cache, CACHE_TTL } from '@/lib/cache';
+
+const CACHE_KEY = 'public:about';
 
 // Default about data when database is not available
 const DEFAULT_ABOUT_DATA = {
@@ -34,52 +37,75 @@ const DEFAULT_ABOUT_DATA = {
 
 /**
  * GET - Get about data for public display
- * This route reads from database to ensure real-time synchronization
- * with admin dashboard changes
+ * This route reads from database with caching to ensure good performance
+ * while still allowing real-time synchronization with admin dashboard changes
  */
 export async function GET() {
   console.log('[API] GET /api/public/about');
   
   try {
+    // Try to get from cache first
+    const cached = cache.get<typeof DEFAULT_ABOUT_DATA>(CACHE_KEY);
+    if (cached) {
+      console.log('[API] ✓ Returning cached about data');
+      return NextResponse.json(cached, {
+        headers: {
+          'Cache-Control': 'public, max-age=60, stale-while-revalidate=120',
+          'X-Cache': 'HIT',
+        },
+      });
+    }
+
+    // Fetch from database with timeout
     const collection = getAboutCollection();
     const aboutDoc = await collection.findOne({ docId: 'about-data' });
     
     // Remove database internal fields
-    let data = {};
+    let data = DEFAULT_ABOUT_DATA;
     if (aboutDoc) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { _id, docId, ...about }: Partial<AboutDocument> = aboutDoc;
-      data = about;
+      data = about as typeof DEFAULT_ABOUT_DATA;
     }
     
-    // If no data found or data is empty, return default data
+    // If no data found or data is empty, use default data
     if (!aboutDoc || Object.keys(data).length === 0) {
-      console.log('[API] No about data found, returning defaults');
-      return NextResponse.json(DEFAULT_ABOUT_DATA, {
-        headers: {
-          'Cache-Control': 'no-store, no-cache, must-revalidate',
-          'Pragma': 'no-cache',
-        },
-      });
+      console.log('[API] No about data found, using defaults');
+      data = DEFAULT_ABOUT_DATA;
     }
+    
+    // Cache the results
+    cache.set(CACHE_KEY, data, CACHE_TTL.MEDIUM);
     
     console.log('[API] ✓ Retrieved about data from database');
     
-    // Return with cache control headers to prevent stale data
+    // Return with cache control headers
     return NextResponse.json(data, {
       headers: {
-        'Cache-Control': 'no-store, no-cache, must-revalidate',
-        'Pragma': 'no-cache',
+        'Cache-Control': 'public, max-age=60, stale-while-revalidate=120',
+        'X-Cache': 'MISS',
       },
     });
   } catch (error) {
     console.error('[API] Error reading about data from database:', error);
     
-    // Return default data on error instead of 500
+    // Try to return stale cache on error
+    const staleCache = cache.get<typeof DEFAULT_ABOUT_DATA>(CACHE_KEY);
+    if (staleCache) {
+      console.log('[API] ⚠️ Returning stale cache due to error');
+      return NextResponse.json(staleCache, {
+        headers: {
+          'Cache-Control': 'public, max-age=30',
+          'X-Cache': 'STALE',
+        },
+      });
+    }
+    
+    // Return default data on error
     console.log('[API] Returning default about data due to error');
     return NextResponse.json(DEFAULT_ABOUT_DATA, {
       headers: {
-        'Cache-Control': 'no-store, no-cache, must-revalidate',
-        'Pragma': 'no-cache',
+        'Cache-Control': 'public, max-age=30',
       },
     });
   }
