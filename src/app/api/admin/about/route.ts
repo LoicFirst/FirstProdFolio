@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, handleApiError, logApiRequest } from '@/lib/api-helpers';
-import { readJSONFile, writeJSONFile } from '@/lib/filesystem';
-import path from 'path';
-
-const ABOUT_FILE_PATH = path.join(process.cwd(), 'src', 'data', 'about.json');
+import { getAboutCollection } from '@/lib/storage/mongodb';
+import { AboutDocument } from '@/lib/storage/types';
 
 interface AboutData {
   profile?: {
@@ -30,15 +28,8 @@ interface AboutData {
   }>;
 }
 
-// Helper to read about from JSON file
-function readAbout(): AboutData {
-  return readJSONFile<AboutData>(ABOUT_FILE_PATH);
-}
-
-// Helper to write about to JSON file
-function writeAbout(data: AboutData): void {
-  writeJSONFile(ABOUT_FILE_PATH, data);
-}
+// Document ID for the single about document in MongoDB
+const ABOUT_DOC_ID = 'about-data';
 
 // GET about data
 export async function GET(request: NextRequest) {
@@ -48,9 +39,18 @@ export async function GET(request: NextRequest) {
     const { error } = await requireAuth(request);
     if (error) return error;
 
-    const about = readAbout();
-    console.log('[API] ✓ Retrieved about data');
-    return NextResponse.json({ about });
+    const collection = await getAboutCollection();
+    const aboutDoc = await collection.findOne({ docId: ABOUT_DOC_ID });
+    
+    // Return the data without the MongoDB _id and docId fields
+    if (aboutDoc) {
+      const { _id, docId, ...about }: Partial<AboutDocument> = aboutDoc;
+      console.log('[API] ✓ Retrieved about data from MongoDB');
+      return NextResponse.json({ about });
+    }
+    
+    console.log('[API] ✓ No about data found in MongoDB');
+    return NextResponse.json({ about: {} });
   } catch (error) {
     return handleApiError(error, 'GET /api/admin/about');
   }
@@ -65,11 +65,16 @@ export async function POST(request: NextRequest) {
     if (error) return error;
 
     const body = await request.json();
-    console.log('[API] Updating about data');
+    console.log('[API] Updating about data in MongoDB');
 
-    writeAbout(body);
+    const collection = await getAboutCollection();
+    await collection.updateOne(
+      { docId: ABOUT_DOC_ID },
+      { $set: { ...body, docId: ABOUT_DOC_ID } },
+      { upsert: true }
+    );
 
-    console.log('[API] ✓ About data updated successfully');
+    console.log('[API] ✓ About data updated successfully in MongoDB');
     return NextResponse.json({ about: body }, { status: 200 });
   } catch (error) {
     return handleApiError(error, 'POST /api/admin/about');

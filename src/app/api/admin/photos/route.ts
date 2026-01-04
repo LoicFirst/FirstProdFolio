@@ -1,34 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, handleApiError, logApiRequest } from '@/lib/api-helpers';
-import { readJSONFile, writeJSONFile } from '@/lib/filesystem';
-import path from 'path';
-
-const PHOTOS_FILE_PATH = path.join(process.cwd(), 'src', 'data', 'photos.json');
-
-interface Photo {
-  id: string;
-  title: string;
-  description: string;
-  year?: number;
-  image_url: string;
-  thumbnail_url?: string;
-  category?: string;
-  location?: string;
-}
-
-interface PhotosData {
-  photos: Photo[];
-}
-
-// Helper to read photos from JSON file
-function readPhotos(): PhotosData {
-  return readJSONFile<PhotosData>(PHOTOS_FILE_PATH);
-}
-
-// Helper to write photos to JSON file
-function writePhotos(data: PhotosData): void {
-  writeJSONFile(PHOTOS_FILE_PATH, data);
-}
+import { getPhotosCollection } from '@/lib/storage/mongodb';
+import { PhotoDocument } from '@/lib/storage/types';
 
 // GET all photos
 export async function GET(request: NextRequest) {
@@ -38,9 +11,14 @@ export async function GET(request: NextRequest) {
     const { error } = await requireAuth(request);
     if (error) return error;
 
-    const data = readPhotos();
-    console.log(`[API] ✓ Retrieved ${data.photos.length} photos`);
-    return NextResponse.json({ photos: data.photos });
+    const collection = await getPhotosCollection();
+    const photos = await collection.find({}).toArray();
+    
+    // Remove MongoDB _id field from results
+    const cleanPhotos = photos.map(({ _id, ...photo }) => photo);
+    
+    console.log(`[API] ✓ Retrieved ${cleanPhotos.length} photos from MongoDB`);
+    return NextResponse.json({ photos: cleanPhotos });
   } catch (error) {
     return handleApiError(error, 'GET /api/admin/photos');
   }
@@ -54,24 +32,30 @@ export async function POST(request: NextRequest) {
     const { error } = await requireAuth(request);
     if (error) return error;
 
-    const data = readPhotos();
     const body = await request.json();
-
     console.log('[API] Creating photo with title:', body.title);
 
-    // Generate a unique ID
-    const count = data.photos.length;
-    const id = `photo-${String(count + 1).padStart(3, '0')}-${Date.now()}`;
+    const collection = await getPhotosCollection();
+    
+    // Generate a unique ID using timestamp and random string for better uniqueness
+    // The timestamp ensures chronological ordering, and random suffix prevents collisions
+    const randomSuffix = Math.random().toString(36).substring(2, 9);
+    const id = `photo-${Date.now()}-${randomSuffix}`;
 
-    const newPhoto = {
-      ...body,
+    const newPhoto: PhotoDocument = {
       id,
+      title: body.title,
+      description: body.description,
+      image_url: body.image_url,
+      ...(body.year && { year: body.year }),
+      ...(body.thumbnail_url && { thumbnail_url: body.thumbnail_url }),
+      ...(body.category && { category: body.category }),
+      ...(body.location && { location: body.location }),
     };
 
-    data.photos.push(newPhoto);
-    writePhotos(data);
+    await collection.insertOne(newPhoto);
 
-    console.log('[API] ✓ Photo created successfully:', newPhoto.id);
+    console.log('[API] ✓ Photo created successfully in MongoDB:', newPhoto.id);
     return NextResponse.json({ photo: newPhoto }, { status: 201 });
   } catch (error) {
     return handleApiError(error, 'POST /api/admin/photos');
@@ -86,7 +70,6 @@ export async function PUT(request: NextRequest) {
     const { error } = await requireAuth(request);
     if (error) return error;
 
-    const data = readPhotos();
     const body = await request.json();
     const { id, ...updateData } = body;
 
@@ -97,17 +80,20 @@ export async function PUT(request: NextRequest) {
 
     console.log('[API] Updating photo:', id);
 
-    const index = data.photos.findIndex((p: Photo) => p.id === id);
-    if (index === -1) {
+    const collection = await getPhotosCollection();
+    const result = await collection.updateOne(
+      { id },
+      { $set: { ...updateData, id } }
+    );
+
+    if (result.matchedCount === 0) {
       console.error('[API] Photo not found:', id);
       return NextResponse.json({ error: 'Photo not found' }, { status: 404 });
     }
 
-    data.photos[index] = { ...data.photos[index], ...updateData, id };
-    writePhotos(data);
-
-    console.log('[API] ✓ Photo updated successfully:', id);
-    return NextResponse.json({ photo: data.photos[index] });
+    const updatedPhoto = { ...updateData, id };
+    console.log('[API] ✓ Photo updated successfully in MongoDB:', id);
+    return NextResponse.json({ photo: updatedPhoto });
   } catch (error) {
     return handleApiError(error, 'PUT /api/admin/photos');
   }
@@ -121,7 +107,6 @@ export async function DELETE(request: NextRequest) {
     const { error } = await requireAuth(request);
     if (error) return error;
 
-    const data = readPhotos();
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 
@@ -132,17 +117,15 @@ export async function DELETE(request: NextRequest) {
 
     console.log('[API] Deleting photo:', id);
 
-    const initialLength = data.photos.length;
-    data.photos = data.photos.filter((p: Photo) => p.id !== id);
+    const collection = await getPhotosCollection();
+    const result = await collection.deleteOne({ id });
 
-    if (data.photos.length === initialLength) {
+    if (result.deletedCount === 0) {
       console.error('[API] Photo not found for deletion:', id);
       return NextResponse.json({ error: 'Photo not found' }, { status: 404 });
     }
 
-    writePhotos(data);
-
-    console.log('[API] ✓ Photo deleted successfully:', id);
+    console.log('[API] ✓ Photo deleted successfully from MongoDB:', id);
     return NextResponse.json({ message: 'Photo deleted successfully' });
   } catch (error) {
     return handleApiError(error, 'DELETE /api/admin/photos');

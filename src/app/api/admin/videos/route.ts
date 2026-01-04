@@ -1,34 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, handleApiError, logApiRequest } from '@/lib/api-helpers';
-import { readJSONFile, writeJSONFile } from '@/lib/filesystem';
-import path from 'path';
-
-const VIDEOS_FILE_PATH = path.join(process.cwd(), 'src', 'data', 'videos.json');
-
-interface Video {
-  id: string;
-  title: string;
-  description: string;
-  year?: number;
-  video_url: string;
-  thumbnail_url?: string;
-  duration?: string;
-  category?: string;
-}
-
-interface VideosData {
-  videos: Video[];
-}
-
-// Helper to read videos from JSON file
-function readVideos(): VideosData {
-  return readJSONFile<VideosData>(VIDEOS_FILE_PATH);
-}
-
-// Helper to write videos to JSON file
-function writeVideos(data: VideosData): void {
-  writeJSONFile(VIDEOS_FILE_PATH, data);
-}
+import { getVideosCollection } from '@/lib/storage/mongodb';
+import { VideoDocument } from '@/lib/storage/types';
 
 // GET all videos
 export async function GET(request: NextRequest) {
@@ -38,9 +11,14 @@ export async function GET(request: NextRequest) {
     const { error } = await requireAuth(request);
     if (error) return error;
 
-    const data = readVideos();
-    console.log(`[API] ✓ Retrieved ${data.videos.length} videos`);
-    return NextResponse.json({ videos: data.videos });
+    const collection = await getVideosCollection();
+    const videos = await collection.find({}).toArray();
+    
+    // Remove MongoDB _id field from results
+    const cleanVideos = videos.map(({ _id, ...video }) => video);
+    
+    console.log(`[API] ✓ Retrieved ${cleanVideos.length} videos from MongoDB`);
+    return NextResponse.json({ videos: cleanVideos });
   } catch (error) {
     return handleApiError(error, 'GET /api/admin/videos');
   }
@@ -54,24 +32,30 @@ export async function POST(request: NextRequest) {
     const { error } = await requireAuth(request);
     if (error) return error;
 
-    const data = readVideos();
     const body = await request.json();
-
     console.log('[API] Creating video with title:', body.title);
 
-    // Generate a unique ID
-    const count = data.videos.length;
-    const id = `video-${String(count + 1).padStart(3, '0')}-${Date.now()}`;
+    const collection = await getVideosCollection();
+    
+    // Generate a unique ID using timestamp and random string for better uniqueness
+    // The timestamp ensures chronological ordering, and random suffix prevents collisions
+    const randomSuffix = Math.random().toString(36).substring(2, 9);
+    const id = `video-${Date.now()}-${randomSuffix}`;
 
-    const newVideo = {
-      ...body,
+    const newVideo: VideoDocument = {
       id,
+      title: body.title,
+      description: body.description,
+      video_url: body.video_url,
+      ...(body.year && { year: body.year }),
+      ...(body.thumbnail_url && { thumbnail_url: body.thumbnail_url }),
+      ...(body.duration && { duration: body.duration }),
+      ...(body.category && { category: body.category }),
     };
 
-    data.videos.push(newVideo);
-    writeVideos(data);
+    await collection.insertOne(newVideo);
 
-    console.log('[API] ✓ Video created successfully:', newVideo.id);
+    console.log('[API] ✓ Video created successfully in MongoDB:', newVideo.id);
     return NextResponse.json({ video: newVideo }, { status: 201 });
   } catch (error) {
     return handleApiError(error, 'POST /api/admin/videos');
@@ -86,7 +70,6 @@ export async function PUT(request: NextRequest) {
     const { error } = await requireAuth(request);
     if (error) return error;
 
-    const data = readVideos();
     const body = await request.json();
     const { id, ...updateData } = body;
 
@@ -97,17 +80,20 @@ export async function PUT(request: NextRequest) {
 
     console.log('[API] Updating video:', id);
 
-    const index = data.videos.findIndex((v: Video) => v.id === id);
-    if (index === -1) {
+    const collection = await getVideosCollection();
+    const result = await collection.updateOne(
+      { id },
+      { $set: { ...updateData, id } }
+    );
+
+    if (result.matchedCount === 0) {
       console.error('[API] Video not found:', id);
       return NextResponse.json({ error: 'Video not found' }, { status: 404 });
     }
 
-    data.videos[index] = { ...data.videos[index], ...updateData, id };
-    writeVideos(data);
-
-    console.log('[API] ✓ Video updated successfully:', id);
-    return NextResponse.json({ video: data.videos[index] });
+    const updatedVideo = { ...updateData, id };
+    console.log('[API] ✓ Video updated successfully in MongoDB:', id);
+    return NextResponse.json({ video: updatedVideo });
   } catch (error) {
     return handleApiError(error, 'PUT /api/admin/videos');
   }
@@ -121,7 +107,6 @@ export async function DELETE(request: NextRequest) {
     const { error } = await requireAuth(request);
     if (error) return error;
 
-    const data = readVideos();
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 
@@ -132,17 +117,15 @@ export async function DELETE(request: NextRequest) {
 
     console.log('[API] Deleting video:', id);
 
-    const initialLength = data.videos.length;
-    data.videos = data.videos.filter((v: Video) => v.id !== id);
+    const collection = await getVideosCollection();
+    const result = await collection.deleteOne({ id });
 
-    if (data.videos.length === initialLength) {
+    if (result.deletedCount === 0) {
       console.error('[API] Video not found for deletion:', id);
       return NextResponse.json({ error: 'Video not found' }, { status: 404 });
     }
 
-    writeVideos(data);
-
-    console.log('[API] ✓ Video deleted successfully:', id);
+    console.log('[API] ✓ Video deleted successfully from MongoDB:', id);
     return NextResponse.json({ message: 'Video deleted successfully' });
   } catch (error) {
     return handleApiError(error, 'DELETE /api/admin/videos');
