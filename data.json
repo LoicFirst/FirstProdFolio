@@ -1,5 +1,18 @@
 {
-  "projects": [],
+  "projects": [
+    {
+      "title": "Test Project",
+      "description": "This is a test project",
+      "video": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "images": [
+        "/static/images/test.jpg"
+      ],
+      "url": "https://example.com",
+      "id": 1,
+      "createdAt": "2026-01-04T00:14:44.169Z",
+      "updatedAt": "2026-01-04T00:14:44.169Z"
+    }
+  ],
   "admin": {
     "email": "loicmazagran2007@gmail.com",
     "password": "$2b$10$VXrCb7vqpNjznoeiPs/SE.i1aF7p9d7C963dtvZZb.5fX2wcwyZFC"

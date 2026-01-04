@@ -1,7 +1,14 @@
 import jwt from 'jsonwebtoken';
 import { NextRequest, NextResponse } from 'next/server';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-this-in-production';
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+  console.error('[JWT] CRITICAL: JWT_SECRET environment variable is not set');
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('JWT_SECRET must be set in production');
+  }
+}
 
 export interface JWTPayload {
   email: string;
@@ -13,6 +20,9 @@ export interface JWTPayload {
  * Generate a JWT token for authenticated user
  */
 export function generateToken(email: string): string {
+  if (!JWT_SECRET) {
+    throw new Error('JWT_SECRET is not configured');
+  }
   return jwt.sign(
     { email },
     JWT_SECRET,
@@ -24,6 +34,10 @@ export function generateToken(email: string): string {
  * Verify and decode a JWT token
  */
 export function verifyToken(token: string): JWTPayload | null {
+  if (!JWT_SECRET) {
+    console.error('[JWT] JWT_SECRET is not configured');
+    return null;
+  }
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
     return decoded;
@@ -45,7 +59,7 @@ export function extractToken(request: NextRequest): string | null {
   
   // Extract token from "Bearer <token>" format
   const parts = authHeader.split(' ');
-  if (parts.length === 2 && parts[0] === 'Bearer') {
+  if (parts.length === 2 && parts[0] === 'Bearer' && parts[1].length > 0) {
     return parts[1];
   }
   

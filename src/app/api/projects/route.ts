@@ -7,8 +7,8 @@ import {
 } from '@/lib/db/json-db';
 import { authenticateRequest } from '@/lib/auth/jwt';
 
-// YouTube URL validation regex
-const YOUTUBE_URL_REGEX = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$/;
+// YouTube URL validation regex - matches standard YouTube URLs
+const YOUTUBE_URL_REGEX = /^(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|embed\/|v\/)|youtu\.be\/)[a-zA-Z0-9_-]{11}(\?[^\s]*)?$/;
 
 /**
  * POST - Create a new project (protected)
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Create project
-    const newProject = createProject({
+    const newProject = await createProject({
       title,
       description,
       video: video || undefined,
@@ -95,7 +95,7 @@ export async function PUT(request: NextRequest) {
     }
     
     // Update project
-    const updatedProject = updateProject(id, {
+    const updatedProject = await updateProject(id, {
       title,
       description,
       video,
@@ -154,7 +154,7 @@ export async function DELETE(request: NextRequest) {
     }
     
     // Delete project
-    const success = deleteProject(id);
+    const success = await deleteProject(id);
     
     if (!success) {
       return NextResponse.json(

@@ -4,6 +4,32 @@ import path from 'path';
 // Path to the JSON data file
 const DATA_FILE_PATH = path.join(process.cwd(), 'data.json');
 
+// Simple mutex lock for file operations
+let isWriting = false;
+const writeQueue: (() => void)[] = [];
+
+async function acquireWriteLock(): Promise<void> {
+  return new Promise((resolve) => {
+    if (!isWriting) {
+      isWriting = true;
+      resolve();
+    } else {
+      writeQueue.push(() => {
+        isWriting = true;
+        resolve();
+      });
+    }
+  });
+}
+
+function releaseWriteLock(): void {
+  isWriting = false;
+  const next = writeQueue.shift();
+  if (next) {
+    next();
+  }
+}
+
 export interface Project {
   id: number;
   title: string;
@@ -46,15 +72,18 @@ export function readData(): DatabaseData {
 }
 
 /**
- * Write data to JSON file
+ * Write data to JSON file with lock
  */
-export function writeData(data: DatabaseData): void {
+export async function writeData(data: DatabaseData): Promise<void> {
+  await acquireWriteLock();
   try {
     fs.writeFileSync(DATA_FILE_PATH, JSON.stringify(data, null, 2), 'utf-8');
     console.log('[JSON-DB] ✓ Data written successfully');
   } catch (error) {
     console.error('[JSON-DB] Error writing data file:', error);
     throw new Error('Failed to write data to file');
+  } finally {
+    releaseWriteLock();
   }
 }
 
@@ -77,7 +106,7 @@ export function getProjectById(id: number): Project | undefined {
 /**
  * Create a new project
  */
-export function createProject(project: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>): Project {
+export async function createProject(project: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>): Promise<Project> {
   const data = readData();
   
   // Generate new ID
@@ -93,7 +122,7 @@ export function createProject(project: Omit<Project, 'id' | 'createdAt' | 'updat
   };
   
   data.projects.push(newProject);
-  writeData(data);
+  await writeData(data);
   
   console.log('[JSON-DB] ✓ Project created:', newId);
   return newProject;
@@ -102,7 +131,7 @@ export function createProject(project: Omit<Project, 'id' | 'createdAt' | 'updat
 /**
  * Update a project
  */
-export function updateProject(id: number, updates: Partial<Omit<Project, 'id' | 'createdAt'>>): Project | null {
+export async function updateProject(id: number, updates: Partial<Omit<Project, 'id' | 'createdAt'>>): Promise<Project | null> {
   const data = readData();
   const index = data.projects.findIndex((project) => project.id === id);
   
@@ -118,7 +147,7 @@ export function updateProject(id: number, updates: Partial<Omit<Project, 'id' | 
     updatedAt: new Date().toISOString(),
   };
   
-  writeData(data);
+  await writeData(data);
   console.log('[JSON-DB] ✓ Project updated:', id);
   return data.projects[index];
 }
@@ -126,7 +155,7 @@ export function updateProject(id: number, updates: Partial<Omit<Project, 'id' | 
 /**
  * Delete a project
  */
-export function deleteProject(id: number): boolean {
+export async function deleteProject(id: number): Promise<boolean> {
   const data = readData();
   const initialLength = data.projects.length;
   
@@ -137,7 +166,7 @@ export function deleteProject(id: number): boolean {
     return false;
   }
   
-  writeData(data);
+  await writeData(data);
   console.log('[JSON-DB] ✓ Project deleted:', id);
   return true;
 }

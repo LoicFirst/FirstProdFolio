@@ -13,7 +13,11 @@ export async function authenticatedFetch(
   
   const headers = new Headers(options.headers);
   headers.set('Authorization', `Bearer ${token}`);
-  headers.set('Content-Type', 'application/json');
+  
+  // Only set Content-Type for JSON if body is not FormData
+  if (options.body && !(options.body instanceof FormData)) {
+    headers.set('Content-Type', 'application/json');
+  }
   
   return fetch(url, {
     ...options,
