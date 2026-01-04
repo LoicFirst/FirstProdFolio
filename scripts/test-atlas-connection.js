@@ -20,9 +20,10 @@ const { MongoClient } = require('mongodb');
 
 // Try to load environment variables from .env files
 try {
-  require('dotenv').config({ path: '.env.local' });
+  const dotenv = require('dotenv');
+  dotenv.config({ path: '.env.local' });
   if (!process.env.MONGODB_ATLAS_URI) {
-    require('dotenv').config(); // Falls back to .env
+    dotenv.config(); // Falls back to .env
   }
 } catch (error) {
   // dotenv not installed, will use process.env directly
@@ -98,7 +99,7 @@ async function testAtlasConnection() {
     console.log('   ' + '-'.repeat(66));
     
     databasesList.databases.forEach(db => {
-      const sizeInMB = (db.sizeOnDisk / (1024 * 1024)).toFixed(2);
+      const sizeInMB = ((db.sizeOnDisk || 0) / (1024 * 1024)).toFixed(2);
       const isEmpty = db.empty ? 'Yes' : 'No';
       console.log(`   ${db.name.padEnd(30)} | ${(sizeInMB + ' MB').padEnd(15)} | ${isEmpty}`);
     });

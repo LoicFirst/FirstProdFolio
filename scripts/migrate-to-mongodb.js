@@ -18,9 +18,10 @@ const path = require('path');
 
 // Try to load environment variables from .env files
 try {
-  require('dotenv').config({ path: '.env.local' });
+  const dotenv = require('dotenv');
+  dotenv.config({ path: '.env.local' });
   if (!process.env.MONGODB_URI) {
-    require('dotenv').config(); // Falls back to .env
+    dotenv.config(); // Falls back to .env
   }
 } catch (error) {
   // dotenv not installed, will use process.env directly
