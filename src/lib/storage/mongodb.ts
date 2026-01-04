@@ -1,4 +1,5 @@
 import { MongoClient, Db, Collection, Document } from 'mongodb';
+import { AboutDocument, ContactDocument, PhotoDocument, VideoDocument } from './types';
 
 /**
  * MongoDB connection utility for portfolio data storage
@@ -13,7 +14,12 @@ import { MongoClient, Db, Collection, Document } from 'mongodb';
 const MONGODB_URI = process.env.MONGODB_URI;
 
 if (!MONGODB_URI) {
-  console.warn('[MongoDB] WARNING: MONGODB_URI is not defined. Database operations will fail.');
+  console.warn(
+    '[MongoDB] WARNING: MONGODB_URI is not defined. ' +
+    'Database operations will fail. This is expected during build time. ' +
+    'Set MONGODB_URI in your .env.local file for local development, ' +
+    'or in Vercel Environment Variables for production.'
+  );
 }
 
 // Database name
@@ -80,28 +86,28 @@ export async function getCollection<T extends Document = Document>(collectionNam
  * Get the about collection
  */
 export async function getAboutCollection() {
-  return getCollection(COLLECTIONS.ABOUT);
+  return getCollection<AboutDocument>(COLLECTIONS.ABOUT);
 }
 
 /**
  * Get the photos collection
  */
 export async function getPhotosCollection() {
-  return getCollection(COLLECTIONS.PHOTOS);
+  return getCollection<PhotoDocument>(COLLECTIONS.PHOTOS);
 }
 
 /**
  * Get the videos collection
  */
 export async function getVideosCollection() {
-  return getCollection(COLLECTIONS.VIDEOS);
+  return getCollection<VideoDocument>(COLLECTIONS.VIDEOS);
 }
 
 /**
  * Get the contact collection
  */
 export async function getContactCollection() {
-  return getCollection(COLLECTIONS.CONTACT);
+  return getCollection<ContactDocument>(COLLECTIONS.CONTACT);
 }
 
 /**

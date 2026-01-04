@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, handleApiError, logApiRequest } from '@/lib/api-helpers';
 import { getPhotosCollection } from '@/lib/storage/mongodb';
+import { PhotoDocument } from '@/lib/storage/types';
 
 interface Photo {
   id: string;
@@ -55,12 +56,12 @@ export async function POST(request: NextRequest) {
     const count = await collection.countDocuments();
     const id = `photo-${String(count + 1).padStart(3, '0')}-${Date.now()}`;
 
-    const newPhoto = {
+    const newPhoto: Omit<PhotoDocument, '_id'> = {
       ...body,
       id,
     };
 
-    await collection.insertOne(newPhoto as any);
+    await collection.insertOne(newPhoto as PhotoDocument);
 
     console.log('[API] ✓ Photo created successfully in MongoDB:', newPhoto.id);
     return NextResponse.json({ photo: newPhoto }, { status: 201 });

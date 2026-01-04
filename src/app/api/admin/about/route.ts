@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, handleApiError, logApiRequest } from '@/lib/api-helpers';
 import { getAboutCollection } from '@/lib/storage/mongodb';
+import { AboutDocument } from '@/lib/storage/types';
 
 interface AboutData {
   profile?: {
@@ -43,7 +44,7 @@ export async function GET(request: NextRequest) {
     
     // Return the data without the MongoDB _id and docId fields
     if (aboutDoc) {
-      const { _id, docId, ...about } = aboutDoc as any;
+      const { _id, docId, ...about }: Partial<AboutDocument> = aboutDoc;
       console.log('[API] ✓ Retrieved about data from MongoDB');
       return NextResponse.json({ about });
     }

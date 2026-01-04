@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getContactCollection } from '@/lib/storage/mongodb';
+import { ContactDocument } from '@/lib/storage/types';
 
 /**
  * GET - Get contact data for public display
@@ -16,7 +17,7 @@ export async function GET() {
     // Remove MongoDB internal fields
     let data = {};
     if (contactDoc) {
-      const { _id, docId, ...contact } = contactDoc as any;
+      const { _id, docId, ...contact }: Partial<ContactDocument> = contactDoc;
       data = contact;
     }
     

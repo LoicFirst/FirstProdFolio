@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAboutCollection } from '@/lib/storage/mongodb';
+import { AboutDocument } from '@/lib/storage/types';
 
 /**
  * GET - Get about data for public display
@@ -16,7 +17,7 @@ export async function GET() {
     // Remove MongoDB internal fields
     let data = {};
     if (aboutDoc) {
-      const { _id, docId, ...about } = aboutDoc as any;
+      const { _id, docId, ...about }: Partial<AboutDocument> = aboutDoc;
       data = about;
     }
     

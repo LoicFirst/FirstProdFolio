@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, handleApiError, logApiRequest } from '@/lib/api-helpers';
 import { getContactCollection } from '@/lib/storage/mongodb';
+import { ContactDocument } from '@/lib/storage/types';
 
 interface ContactData {
   contact?: {
@@ -35,7 +36,7 @@ export async function GET(request: NextRequest) {
     
     // Return the data without the MongoDB _id and docId fields
     if (contactDoc) {
-      const { _id, docId, ...contact } = contactDoc as any;
+      const { _id, docId, ...contact }: Partial<ContactDocument> = contactDoc;
       console.log('[API] ✓ Retrieved contact data from MongoDB');
       return NextResponse.json({ contact });
     }

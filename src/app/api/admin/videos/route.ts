@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, handleApiError, logApiRequest } from '@/lib/api-helpers';
 import { getVideosCollection } from '@/lib/storage/mongodb';
+import { VideoDocument } from '@/lib/storage/types';
 
 interface Video {
   id: string;
@@ -55,12 +56,12 @@ export async function POST(request: NextRequest) {
     const count = await collection.countDocuments();
     const id = `video-${String(count + 1).padStart(3, '0')}-${Date.now()}`;
 
-    const newVideo = {
+    const newVideo: Omit<VideoDocument, '_id'> = {
       ...body,
       id,
     };
 
-    await collection.insertOne(newVideo as any);
+    await collection.insertOne(newVideo as VideoDocument);
 
     console.log('[API] ✓ Video created successfully in MongoDB:', newVideo.id);
     return NextResponse.json({ video: newVideo }, { status: 201 });
