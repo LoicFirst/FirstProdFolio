@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { HiArrowRight, HiPlay, HiPhotograph } from 'react-icons/hi';
 import FeaturedContent from '@/components/FeaturedContent';
+import ClientReviews from '@/components/ClientReviews';
 import videosData from '@/data/videos.json';
 import photosData from '@/data/photos.json';
 import themeData from '@/data/theme.json';
@@ -170,6 +171,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Client Reviews Section - After À propos de moi */}
+      <ClientReviews />
 
       {/* Contact CTA */}
       <section className="py-20 bg-gradient-to-br from-gray-900 to-black">

@@ -77,3 +77,25 @@ export interface VideoDocument extends Document {
   duration?: string;
   category?: string;
 }
+
+// Review MongoDB document
+export interface ReviewDocument extends Document {
+  id: string;
+  name: string;
+  profession: string;
+  photo_url?: string;
+  review_text: string;
+  rating?: number;
+  status: ReviewStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+// Review status type
+export type ReviewStatus = 'pending' | 'approved' | 'rejected';
+
+// Site Settings MongoDB document
+export interface SettingsDocument extends MongoDocumentWithId {
+  lightWaveEffect: boolean;
+  reviewsEnabled: boolean;
+}
