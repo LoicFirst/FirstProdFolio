@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "postinstall": "node scripts/setup.js",
+    "setup": "node scripts/setup.js"
   },
   "dependencies": {
     "@types/jsonwebtoken": "^9.0.10",
