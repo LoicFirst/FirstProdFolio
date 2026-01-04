@@ -4,11 +4,11 @@ import Video from '@/models/Video';
 import { requireAuth, handleApiError, logApiRequest } from '@/lib/api-helpers';
 
 // GET all videos
-export async function GET() {
+export async function GET(request: NextRequest) {
   logApiRequest('GET', '/api/admin/videos');
   
   try {
-    const { error } = await requireAuth();
+    const { error } = await requireAuth(request);
     if (error) return error;
 
     await dbConnect();
@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
   logApiRequest('POST', '/api/admin/videos');
   
   try {
-    const { error } = await requireAuth();
+    const { error } = await requireAuth(request);
     if (error) return error;
 
     await dbConnect();
@@ -55,7 +55,7 @@ export async function PUT(request: NextRequest) {
   logApiRequest('PUT', '/api/admin/videos');
   
   try {
-    const { error } = await requireAuth();
+    const { error } = await requireAuth(request);
     if (error) return error;
 
     await dbConnect();
@@ -92,7 +92,7 @@ export async function DELETE(request: NextRequest) {
   logApiRequest('DELETE', '/api/admin/videos');
   
   try {
-    const { error } = await requireAuth();
+    const { error } = await requireAuth(request);
     if (error) return error;
 
     await dbConnect();

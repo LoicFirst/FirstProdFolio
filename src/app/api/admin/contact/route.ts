@@ -4,11 +4,11 @@ import Contact from '@/models/Contact';
 import { requireAuth, handleApiError, logApiRequest } from '@/lib/api-helpers';
 
 // GET contact data
-export async function GET() {
+export async function GET(request: NextRequest) {
   logApiRequest('GET', '/api/admin/contact');
   
   try {
-    const { error } = await requireAuth();
+    const { error } = await requireAuth(request);
     if (error) return error;
 
     await dbConnect();
@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
   logApiRequest('POST', '/api/admin/contact');
   
   try {
-    const { error } = await requireAuth();
+    const { error } = await requireAuth(request);
     if (error) return error;
 
     await dbConnect();
