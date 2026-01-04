@@ -2,6 +2,25 @@
 
 Ce document explique comment utiliser l'interface d'administration privée du portfolio de Loic Mazagran.
 
+## ⚠️ IMPORTANT: Limitation du déploiement en production
+
+**État actuel:**
+- ✅ **Développement local**: Toutes les fonctionnalités fonctionnent parfaitement
+- ❌ **Production (Vercel)**: L'admin peut consulter les données mais **ne peut pas sauvegarder les modifications**
+
+**Pourquoi?**
+Les environnements serverless comme Vercel ont un **système de fichiers en lecture seule**. L'application utilise actuellement des fichiers JSON pour stocker les données, ce qui fonctionne en local mais pas en production.
+
+**Solutions:**
+Consultez le fichier `PRODUCTION_DEPLOYMENT.md` pour des solutions détaillées, notamment:
+1. Utiliser Vercel Blob Storage
+2. Utiliser une base de données (MongoDB, PostgreSQL)
+3. Déployer sur une plateforme avec système de fichiers inscriptible (Railway, Render)
+
+L'application détecte maintenant automatiquement les systèmes de fichiers en lecture seule et affiche des messages d'erreur clairs avec des instructions.
+
+---
+
 ## 🔐 Accès à l'interface d'administration
 
 ### URL d'accès
