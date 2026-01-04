@@ -41,9 +41,7 @@ export default function ContactPage() {
   useEffect(() => {
     const fetchContact = async () => {
       try {
-        const response = await fetch('/api/public/contact', {
-          cache: 'no-store',
-        });
+        const response = await fetch('/api/public/contact');
         const data = await response.json();
         setContactData(data);
       } catch (error) {

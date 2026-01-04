@@ -50,9 +50,7 @@ export default function AboutPage() {
   useEffect(() => {
     const fetchAbout = async () => {
       try {
-        const response = await fetch('/api/public/about', {
-          cache: 'no-store',
-        });
+        const response = await fetch('/api/public/about');
         const data = await response.json();
         setAboutData(data);
       } catch (error) {

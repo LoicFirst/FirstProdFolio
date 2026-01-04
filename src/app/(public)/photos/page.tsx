@@ -25,9 +25,7 @@ export default function PhotosPage() {
   useEffect(() => {
     const fetchPhotos = async () => {
       try {
-        const response = await fetch('/api/public/photos', {
-          cache: 'no-store',
-        });
+        const response = await fetch('/api/public/photos');
         const data = await response.json();
         // Filter out unpublished photos
         const publishedPhotos = (data.photos || []).filter((p: Photo) => p.isPublished !== false);

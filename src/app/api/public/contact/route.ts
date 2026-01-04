@@ -22,9 +22,8 @@ export async function GET() {
     // Return with cache control headers to prevent stale data
     return NextResponse.json(data, {
       headers: {
-        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
         'Pragma': 'no-cache',
-        'Expires': '0',
       },
     });
   } catch (error) {

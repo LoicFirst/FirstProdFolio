@@ -25,9 +25,7 @@ export default function VideosPage() {
   useEffect(() => {
     const fetchVideos = async () => {
       try {
-        const response = await fetch('/api/public/videos', {
-          cache: 'no-store',
-        });
+        const response = await fetch('/api/public/videos');
         const data = await response.json();
         // Filter out unpublished videos
         const publishedVideos = (data.videos || []).filter((v: Video) => v.isPublished !== false);
