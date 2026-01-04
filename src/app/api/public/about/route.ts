@@ -45,7 +45,7 @@ export async function GET() {
   
   try {
     // Try to get from cache first
-    const cached = cache.get<any>(CACHE_KEY);
+    const cached = cache.get<typeof DEFAULT_ABOUT_DATA>(CACHE_KEY);
     if (cached) {
       console.log('[API] ✓ Returning cached about data');
       return NextResponse.json(cached, {
@@ -61,10 +61,11 @@ export async function GET() {
     const aboutDoc = await collection.findOne({ docId: 'about-data' });
     
     // Remove database internal fields
-    let data = {};
+    let data = DEFAULT_ABOUT_DATA;
     if (aboutDoc) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { _id, docId, ...about }: Partial<AboutDocument> = aboutDoc;
-      data = about;
+      data = about as typeof DEFAULT_ABOUT_DATA;
     }
     
     // If no data found or data is empty, use default data
@@ -89,7 +90,7 @@ export async function GET() {
     console.error('[API] Error reading about data from database:', error);
     
     // Try to return stale cache on error
-    const staleCache = cache.get<any>(CACHE_KEY);
+    const staleCache = cache.get<typeof DEFAULT_ABOUT_DATA>(CACHE_KEY);
     if (staleCache) {
       console.log('[API] ⚠️ Returning stale cache due to error');
       return NextResponse.json(staleCache, {

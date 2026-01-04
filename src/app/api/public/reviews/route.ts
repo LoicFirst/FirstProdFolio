@@ -1,9 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getReviewsCollection, getSettingsCollection } from '@/lib/storage/database';
 import { cache, CACHE_TTL } from '@/lib/cache';
+import { ReviewDocument, SettingsDocument } from '@/lib/storage/types';
 
 const CACHE_KEY_PREFIX = 'public:reviews';
 const CACHE_KEY_SETTINGS = 'public:reviews:settings';
+
+type CleanReview = Omit<ReviewDocument, '_id'>;
+
+interface ReviewsResponse {
+  reviews: CleanReview[];
+  pagination: {
+    page: number;
+    limit: number;
+    totalCount: number;
+    totalPages: number;
+    hasMore: boolean;
+  };
+}
 
 /**
  * GET - Get all approved reviews for public display
@@ -20,11 +34,13 @@ export async function GET(request: NextRequest) {
     const cacheKey = `${CACHE_KEY_PREFIX}:${page}:${limit}`;
     
     // Check if reviews are enabled (with caching)
-    let settings = cache.get<any>(CACHE_KEY_SETTINGS);
+    let settings = cache.get<SettingsDocument>(CACHE_KEY_SETTINGS);
     if (!settings) {
       const settingsCollection = getSettingsCollection();
       settings = await settingsCollection.findOne({ docId: 'main' });
-      cache.set(CACHE_KEY_SETTINGS, settings, CACHE_TTL.MEDIUM);
+      if (settings) {
+        cache.set(CACHE_KEY_SETTINGS, settings, CACHE_TTL.MEDIUM);
+      }
     }
     
     if (settings && settings.reviewsEnabled === false) {
@@ -39,7 +55,7 @@ export async function GET(request: NextRequest) {
     }
     
     // Try to get from cache first
-    const cached = cache.get<any>(cacheKey);
+    const cached = cache.get<ReviewsResponse>(cacheKey);
     if (cached) {
       console.log('[API] ✓ Returning cached reviews');
       return NextResponse.json(cached, {
@@ -67,9 +83,10 @@ export async function GET(request: NextRequest) {
     const reviews = sortedReviews.slice(skip, skip + limit);
     
     // Remove database _id field from results
-    const cleanReviews = reviews.map(({ _id, ...review }) => review);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const cleanReviews: CleanReview[] = reviews.map(({ _id, ...review }) => review);
     
-    const responseData = { 
+    const responseData: ReviewsResponse = { 
       reviews: cleanReviews,
       pagination: {
         page,
@@ -99,7 +116,7 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1', 10);
     const limit = parseInt(searchParams.get('limit') || '10', 10);
     const cacheKey = `${CACHE_KEY_PREFIX}:${page}:${limit}`;
-    const staleCache = cache.get<any>(cacheKey);
+    const staleCache = cache.get<ReviewsResponse>(cacheKey);
     
     if (staleCache) {
       console.log('[API] ⚠️ Returning stale cache due to error');

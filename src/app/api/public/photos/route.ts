@@ -1,8 +1,11 @@
 import { NextResponse } from 'next/server';
 import { getPhotosCollection } from '@/lib/storage/database';
 import { cache, CACHE_TTL } from '@/lib/cache';
+import { PhotoDocument } from '@/lib/storage/types';
 
 const CACHE_KEY = 'public:photos';
+
+type CleanPhoto = Omit<PhotoDocument, '_id'>;
 
 /**
  * GET - Get all photos for public display
@@ -14,7 +17,7 @@ export async function GET() {
   
   try {
     // Try to get from cache first
-    const cached = cache.get<any>(CACHE_KEY);
+    const cached = cache.get<CleanPhoto[]>(CACHE_KEY);
     if (cached) {
       console.log('[API] ✓ Returning cached photos');
       return NextResponse.json(
@@ -34,7 +37,8 @@ export async function GET() {
     const photos = await cursor.toArray();
     
     // Remove database _id field from results
-    const cleanPhotos = photos.map(({ _id, ...photo }) => photo);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const cleanPhotos: CleanPhoto[] = photos.map(({ _id, ...photo }) => photo);
     
     // Cache the results
     cache.set(CACHE_KEY, cleanPhotos, CACHE_TTL.SHORT);
@@ -55,7 +59,7 @@ export async function GET() {
     console.error('[API] Error reading photos from database:', error);
     
     // Try to return stale cache on error
-    const staleCache = cache.get<any>(CACHE_KEY);
+    const staleCache = cache.get<CleanPhoto[]>(CACHE_KEY);
     if (staleCache) {
       console.log('[API] ⚠️ Returning stale cache due to error');
       return NextResponse.json(

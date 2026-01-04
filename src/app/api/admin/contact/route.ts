@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, handleApiError, logApiRequest } from '@/lib/api-helpers';
 import { getContactCollection } from '@/lib/storage/database';
 import { ContactDocument } from '@/lib/storage/types';
+import { cache } from '@/lib/cache';
+
+const CACHE_KEY = 'public:contact';
 
 interface ContactData {
   contact?: {
@@ -65,6 +68,9 @@ export async function POST(request: NextRequest) {
       { $set: { ...body, docId: CONTACT_DOC_ID } },
       { upsert: true }
     );
+
+    // Clear cache so public site shows updated data
+    cache.clear(CACHE_KEY);
 
     console.log('[API] ✓ Contact data updated successfully in database');
     return NextResponse.json({ contact: body }, { status: 200 });

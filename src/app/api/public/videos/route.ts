@@ -1,8 +1,11 @@
 import { NextResponse } from 'next/server';
 import { getVideosCollection } from '@/lib/storage/database';
 import { cache, CACHE_TTL } from '@/lib/cache';
+import { VideoDocument } from '@/lib/storage/types';
 
 const CACHE_KEY = 'public:videos';
+
+type CleanVideo = Omit<VideoDocument, '_id'>;
 
 /**
  * GET - Get all videos for public display
@@ -14,7 +17,7 @@ export async function GET() {
   
   try {
     // Try to get from cache first
-    const cached = cache.get<any>(CACHE_KEY);
+    const cached = cache.get<CleanVideo[]>(CACHE_KEY);
     if (cached) {
       console.log('[API] ✓ Returning cached videos');
       return NextResponse.json(
@@ -34,7 +37,8 @@ export async function GET() {
     const videos = await cursor.toArray();
     
     // Remove database _id field from results
-    const cleanVideos = videos.map(({ _id, ...video }) => video);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const cleanVideos: CleanVideo[] = videos.map(({ _id, ...video }) => video);
     
     // Cache the results
     cache.set(CACHE_KEY, cleanVideos, CACHE_TTL.SHORT);
@@ -55,7 +59,7 @@ export async function GET() {
     console.error('[API] Error reading videos from database:', error);
     
     // Try to return stale cache on error
-    const staleCache = cache.get<any>(CACHE_KEY);
+    const staleCache = cache.get<CleanVideo[]>(CACHE_KEY);
     if (staleCache) {
       console.log('[API] ⚠️ Returning stale cache due to error');
       return NextResponse.json(
