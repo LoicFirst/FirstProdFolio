@@ -1,20 +1,60 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import VideoCard from '@/components/VideoCard';
-import videosData from '@/data/videos.json';
+
+interface Video {
+  id: string;
+  title: string;
+  description: string;
+  year: number;
+  video_url: string;
+  thumbnail_url: string;
+  duration: string;
+  category: string;
+  isPublished?: boolean;
+}
 
 export default function VideosPage() {
+  const [videos, setVideos] = useState<Video[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>('all');
   
+  // Fetch videos dynamically from API
+  useEffect(() => {
+    const fetchVideos = async () => {
+      try {
+        const response = await fetch('/api/public/videos');
+        const data = await response.json();
+        // Filter out unpublished videos
+        const publishedVideos = (data.videos || []).filter((v: Video) => v.isPublished !== false);
+        setVideos(publishedVideos);
+      } catch (error) {
+        console.error('Error fetching videos:', error);
+        setVideos([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchVideos();
+  }, []);
+  
   // Get unique categories
-  const categories = ['all', ...new Set(videosData.videos.map(v => v.category))];
+  const categories = ['all', ...new Set(videos.map(v => v.category))];
   
   // Filter videos
   const filteredVideos = filter === 'all' 
-    ? videosData.videos 
-    : videosData.videos.filter(v => v.category === filter);
+    ? videos 
+    : videos.filter(v => v.category === filter);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black py-20 flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-black py-20">

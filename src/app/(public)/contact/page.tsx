@@ -1,10 +1,29 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FaInstagram, FaYoutube, FaVimeoV, FaLinkedinIn, FaTwitter } from 'react-icons/fa';
-import { HiMail, HiPhone, HiLocationMarker } from 'react-icons/hi';
+import { HiMail, HiPhone, HiLocationMarker, HiGlobe } from 'react-icons/hi';
 import ContactForm from '@/components/ContactForm';
-import contactData from '@/data/contact.json';
+
+interface SocialLink {
+  name: string;
+  url: string;
+  icon: string;
+}
+
+interface ContactData {
+  contact: {
+    email: string;
+    phone: string;
+    location: string;
+  };
+  social: SocialLink[];
+  availability: {
+    status: string;
+    message: string;
+  };
+}
 
 const iconMap: { [key: string]: React.ComponentType<{ className?: string }> } = {
   instagram: FaInstagram,
@@ -15,6 +34,41 @@ const iconMap: { [key: string]: React.ComponentType<{ className?: string }> } = 
 };
 
 export default function ContactPage() {
+  const [contactData, setContactData] = useState<ContactData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch contact data dynamically from API
+  useEffect(() => {
+    const fetchContact = async () => {
+      try {
+        const response = await fetch('/api/public/contact');
+        const data = await response.json();
+        setContactData(data);
+      } catch (error) {
+        console.error('Error fetching contact data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchContact();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black py-20 flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!contactData) {
+    return (
+      <div className="min-h-screen bg-black py-20 flex items-center justify-center">
+        <p className="text-gray-500">Impossible de charger les données.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-black py-20">
       <div className="container mx-auto px-6">
@@ -111,7 +165,7 @@ export default function ContactPage() {
               </h3>
               <div className="flex flex-wrap gap-4">
                 {contactData.social.map((social) => {
-                  const Icon = iconMap[social.icon];
+                  const Icon = iconMap[social.icon] || HiGlobe;
                   return (
                     <motion.a
                       key={social.name}

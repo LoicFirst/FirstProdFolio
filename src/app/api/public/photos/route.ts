@@ -18,7 +18,17 @@ export async function GET() {
     const data = JSON.parse(fileContent);
     
     console.log('[API] ✓ Retrieved', data.photos?.length || 0, 'photos from filesystem');
-    return NextResponse.json({ photos: data.photos || [] });
+    
+    // Return with cache control headers to prevent stale data
+    return NextResponse.json(
+      { photos: data.photos || [] },
+      {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+          'Pragma': 'no-cache',
+        },
+      }
+    );
   } catch (error) {
     console.error('[API] Error reading photos from filesystem:', error);
     

@@ -18,7 +18,17 @@ export async function GET() {
     const data = JSON.parse(fileContent);
     
     console.log('[API] ✓ Retrieved', data.videos?.length || 0, 'videos from filesystem');
-    return NextResponse.json({ videos: data.videos || [] });
+    
+    // Return with cache control headers to prevent stale data
+    return NextResponse.json(
+      { videos: data.videos || [] },
+      {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+          'Pragma': 'no-cache',
+        },
+      }
+    );
   } catch (error) {
     console.error('[API] Error reading videos from filesystem:', error);
     
