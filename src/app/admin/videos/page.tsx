@@ -10,6 +10,7 @@ import {
   HiVideoCamera,
   HiExternalLink,
 } from 'react-icons/hi';
+import { authenticatedFetch } from '@/lib/client-api-helpers';
 
 interface Video {
   id: string;
@@ -58,7 +59,7 @@ export default function AdminVideosPage() {
   const fetchVideos = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/admin/videos');
+      const res = await authenticatedFetch('/api/admin/videos');
       const data = await res.json();
       setVideos(data.videos || []);
     } catch (error) {
@@ -79,9 +80,8 @@ export default function AdminVideosPage() {
         ? { ...formData, id: editingVideo.id }
         : formData;
 
-      const res = await fetch(url, {
+      const res = await authenticatedFetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
 
@@ -104,7 +104,7 @@ export default function AdminVideosPage() {
     if (!confirm('Êtes-vous sûr de vouloir supprimer cette vidéo ?')) return;
 
     try {
-      const res = await fetch(`/api/admin/videos?id=${id}`, { method: 'DELETE' });
+      const res = await authenticatedFetch(`/api/admin/videos?id=${id}`, { method: 'DELETE' });
       if (res.ok) {
         await fetchVideos();
       } else {

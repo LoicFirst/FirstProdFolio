@@ -10,6 +10,7 @@ import {
   HiPhotograph,
   HiUpload,
 } from 'react-icons/hi';
+import { authenticatedFetch } from '@/lib/client-api-helpers';
 
 interface Photo {
   id: string;
@@ -61,7 +62,7 @@ export default function AdminPhotosPage() {
   const fetchPhotos = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/admin/photos');
+      const res = await authenticatedFetch('/api/admin/photos');
       const data = await res.json();
       setPhotos(data.photos || []);
     } catch (error) {
@@ -81,7 +82,7 @@ export default function AdminPhotosPage() {
       formDataUpload.append('file', file);
       formDataUpload.append('folder', 'portfolio/photos');
 
-      const res = await fetch('/api/admin/upload', {
+      const res = await authenticatedFetch('/api/admin/upload', {
         method: 'POST',
         body: formDataUpload,
       });
@@ -115,9 +116,8 @@ export default function AdminPhotosPage() {
         ? { ...formData, id: editingPhoto.id }
         : formData;
 
-      const res = await fetch(url, {
+      const res = await authenticatedFetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
 
@@ -140,7 +140,7 @@ export default function AdminPhotosPage() {
     if (!confirm('Êtes-vous sûr de vouloir supprimer cette photo ?')) return;
 
     try {
-      const res = await fetch(`/api/admin/photos?id=${id}`, { method: 'DELETE' });
+      const res = await authenticatedFetch(`/api/admin/photos?id=${id}`, { method: 'DELETE' });
       if (res.ok) {
         await fetchPhotos();
       } else {

@@ -18,6 +18,7 @@ import {
   FaLinkedin,
   FaTwitter,
 } from 'react-icons/fa';
+import { authenticatedFetch } from '@/lib/client-api-helpers';
 
 interface SocialLink {
   name: string;
@@ -79,7 +80,7 @@ export default function AdminContactPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/admin/contact');
+      const res = await authenticatedFetch('/api/admin/contact');
       const result = await res.json();
       if (result.contact) {
         setData(result.contact);
@@ -94,9 +95,8 @@ export default function AdminContactPage() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const res = await fetch('/api/admin/contact', {
+      const res = await authenticatedFetch('/api/admin/contact', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
 

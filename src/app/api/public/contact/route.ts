@@ -18,7 +18,15 @@ export async function GET() {
     const data = JSON.parse(fileContent);
     
     console.log('[API] ✓ Retrieved contact data from filesystem');
-    return NextResponse.json(data);
+    
+    // Return with cache control headers to prevent stale data
+    return NextResponse.json(data, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      },
+    });
   } catch (error) {
     console.error('[API] Error reading contact data from filesystem:', error);
     

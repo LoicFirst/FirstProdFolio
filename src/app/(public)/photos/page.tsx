@@ -1,20 +1,62 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import PhotoGallery from '@/components/PhotoGallery';
-import photosData from '@/data/photos.json';
+
+interface Photo {
+  id: string;
+  title: string;
+  description: string;
+  year: number;
+  image_url: string;
+  thumbnail_url: string;
+  category: string;
+  location: string;
+  isPublished?: boolean;
+}
 
 export default function PhotosPage() {
+  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>('all');
   
+  // Fetch photos dynamically from API
+  useEffect(() => {
+    const fetchPhotos = async () => {
+      try {
+        const response = await fetch('/api/public/photos', {
+          cache: 'no-store',
+        });
+        const data = await response.json();
+        // Filter out unpublished photos
+        const publishedPhotos = (data.photos || []).filter((p: Photo) => p.isPublished !== false);
+        setPhotos(publishedPhotos);
+      } catch (error) {
+        console.error('Error fetching photos:', error);
+        setPhotos([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPhotos();
+  }, []);
+  
   // Get unique categories
-  const categories = ['all', ...new Set(photosData.photos.map(p => p.category))];
+  const categories = ['all', ...new Set(photos.map(p => p.category))];
   
   // Filter photos
   const filteredPhotos = filter === 'all' 
-    ? photosData.photos 
-    : photosData.photos.filter(p => p.category === filter);
+    ? photos 
+    : photos.filter(p => p.category === filter);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black py-20 flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-black py-20">

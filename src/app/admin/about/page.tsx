@@ -8,6 +8,7 @@ import {
   HiTrash,
   HiAcademicCap,
 } from 'react-icons/hi';
+import { authenticatedFetch } from '@/lib/client-api-helpers';
 
 interface Skill {
   category: string;
@@ -67,7 +68,7 @@ export default function AdminAboutPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/admin/about');
+      const res = await authenticatedFetch('/api/admin/about');
       const result = await res.json();
       if (result.about) {
         setData(result.about);
@@ -82,9 +83,8 @@ export default function AdminAboutPage() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const res = await fetch('/api/admin/about', {
+      const res = await authenticatedFetch('/api/admin/about', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
 

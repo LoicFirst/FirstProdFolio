@@ -1,8 +1,39 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { HiAcademicCap, HiCode, HiFilm, HiPhotograph } from 'react-icons/hi';
-import aboutData from '@/data/about.json';
+
+interface Skill {
+  category: string;
+  items: string[];
+}
+
+interface Software {
+  name: string;
+  level: number;
+  icon?: string;
+}
+
+interface Achievement {
+  year: number;
+  title: string;
+  event: string;
+}
+
+interface AboutData {
+  profile: {
+    name: string;
+    title: string;
+    bio: string;
+    photo_url?: string;
+    experience_years: number;
+    location: string;
+  };
+  skills: Skill[];
+  software: Software[];
+  achievements: Achievement[];
+}
 
 const categoryIcons: { [key: string]: React.ComponentType<{ className?: string }> } = {
   'Réalisation': HiFilm,
@@ -12,6 +43,43 @@ const categoryIcons: { [key: string]: React.ComponentType<{ className?: string }
 };
 
 export default function AboutPage() {
+  const [aboutData, setAboutData] = useState<AboutData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch about data dynamically from API
+  useEffect(() => {
+    const fetchAbout = async () => {
+      try {
+        const response = await fetch('/api/public/about', {
+          cache: 'no-store',
+        });
+        const data = await response.json();
+        setAboutData(data);
+      } catch (error) {
+        console.error('Error fetching about data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAbout();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black py-20 flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!aboutData) {
+    return (
+      <div className="min-h-screen bg-black py-20 flex items-center justify-center">
+        <p className="text-gray-500">Impossible de charger les données.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-black py-20">
       <div className="container mx-auto px-6">
