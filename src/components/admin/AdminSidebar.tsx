@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useSession, signOut } from 'next-auth/react';
+import { useAuth } from '@/contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   HiHome,
@@ -29,7 +29,7 @@ const sidebarLinks = [
 export default function AdminSidebar() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
-  const { data: session } = useSession();
+  const { email, logout } = useAuth();
 
   return (
     <>
@@ -116,14 +116,14 @@ export default function AdminSidebar() {
             <div className="flex items-center gap-3 px-4 py-3">
               <div className="flex-1 min-w-0">
                 <p className="text-white text-sm font-medium truncate">
-                  {session?.user?.name || 'Admin'}
+                  Admin
                 </p>
                 <p className="text-gray-500 text-xs truncate">
-                  {session?.user?.email || ''}
+                  {email || ''}
                 </p>
               </div>
               <button
-                onClick={() => signOut({ callbackUrl: '/admin/login' })}
+                onClick={logout}
                 className="p-2 text-gray-400 hover:text-red-500 transition-colors"
                 title="Déconnexion"
               >

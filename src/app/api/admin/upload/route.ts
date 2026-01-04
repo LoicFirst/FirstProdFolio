@@ -6,7 +6,7 @@ export async function POST(request: NextRequest) {
   logApiRequest('POST', '/api/admin/upload');
   
   try {
-    const { error } = await requireAuth();
+    const { error } = await requireAuth(request);
     if (error) return error;
 
     const formData = await request.formData();

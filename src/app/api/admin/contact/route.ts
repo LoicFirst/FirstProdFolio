@@ -1,19 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
-import dbConnect from '@/lib/db/mongodb';
-import Contact from '@/models/Contact';
 import { requireAuth, handleApiError, logApiRequest } from '@/lib/api-helpers';
+import contactData from '@/data/contact.json';
+import fs from 'fs';
+import path from 'path';
+
+const CONTACT_FILE_PATH = path.join(process.cwd(), 'src', 'data', 'contact.json');
+
+// Helper to read contact from JSON file
+function readContact() {
+  const content = fs.readFileSync(CONTACT_FILE_PATH, 'utf-8');
+  return JSON.parse(content);
+}
+
+// Helper to write contact to JSON file
+function writeContact(data: typeof contactData) {
+  fs.writeFileSync(CONTACT_FILE_PATH, JSON.stringify(data, null, 2), 'utf-8');
+}
 
 // GET contact data
-export async function GET() {
+export async function GET(request: NextRequest) {
   logApiRequest('GET', '/api/admin/contact');
   
   try {
-    const { error } = await requireAuth();
+    const { error } = await requireAuth(request);
     if (error) return error;
 
-    await dbConnect();
-    const contact = await Contact.findOne();
-
+    const contact = readContact();
     console.log('[API] ✓ Retrieved contact data');
     return NextResponse.json({ contact });
   } catch (error) {
@@ -26,23 +38,16 @@ export async function POST(request: NextRequest) {
   logApiRequest('POST', '/api/admin/contact');
   
   try {
-    const { error } = await requireAuth();
+    const { error } = await requireAuth(request);
     if (error) return error;
 
-    await dbConnect();
     const body = await request.json();
+    console.log('[API] Updating contact data');
 
-    console.log('[API] Upserting contact data');
-
-    // Upsert - create if doesn't exist, update if exists
-    const contact = await Contact.findOneAndUpdate(
-      {},
-      body,
-      { new: true, upsert: true, runValidators: true }
-    );
+    writeContact(body);
 
     console.log('[API] ✓ Contact data updated successfully');
-    return NextResponse.json({ contact }, { status: 200 });
+    return NextResponse.json({ contact: body }, { status: 200 });
   } catch (error) {
     return handleApiError(error, 'POST /api/admin/contact');
   }
