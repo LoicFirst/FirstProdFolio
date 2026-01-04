@@ -15,6 +15,8 @@ import {
  */
 
 // Helper to convert snake_case from DB to camelCase for frontend
+// Note: For large datasets, consider implementing these as streaming transformations
+// or caching transformed objects for better performance
 function toCamelCase(obj: any): any {
   if (Array.isArray(obj)) {
     return obj.map(toCamelCase);
@@ -44,6 +46,9 @@ function toSnakeCase(obj: any): any {
 
 /**
  * About Collection Operations
+ * 
+ * Note: Table names (TABLES.ABOUT, etc.) are constants defined in aurora.ts
+ * and are safe from SQL injection. They are not user-provided input.
  */
 export const aboutOperations = {
   async findOne(): Promise<AboutDocument | null> {

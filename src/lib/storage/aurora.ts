@@ -63,7 +63,12 @@ export function getAuroraPool(): Pool {
   }
 
   if (missingVars.length > 0) {
-    throw new Error(`Missing required environment variables: ${missingVars.join(', ')}`);
+    throw new Error(
+      `Missing required environment variables: ${missingVars.join(', ')}\n` +
+      'Please set these in your .env.local file for local development,\n' +
+      'or in Vercel Environment Variables for production.\n' +
+      'See AURORA_MIGRATION_GUIDE.md for detailed setup instructions.'
+    );
   }
 
   console.log('[Aurora] Creating new connection pool...');

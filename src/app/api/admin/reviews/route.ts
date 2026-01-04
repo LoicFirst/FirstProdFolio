@@ -81,10 +81,16 @@ export async function PUT(request: NextRequest) {
       updated_at: now,
     };
     
-    await collection.updateOne(
+    const result = await collection.updateOne(
       { id },
       { $set: update }
     );
+    
+    // Check if update was successful
+    if (result && result.modifiedCount === 0) {
+      console.error('[API] Review not found or no changes made:', id);
+      return NextResponse.json({ error: 'Review not found' }, { status: 404 });
+    }
 
     const updatedReview = { ...updateData, id, updated_at: now };
     console.log('[API] ✓ Review updated successfully in database:', id);
