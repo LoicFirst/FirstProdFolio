@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, handleApiError, logApiRequest } from '@/lib/api-helpers';
-import { getSettingsCollection } from '@/lib/storage/mongodb';
+import { getSettingsCollection } from '@/lib/storage/database';
 
 // Default settings
 const DEFAULT_SETTINGS = {
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     const { error } = await requireAuth(request);
     if (error) return error;
 
-    const collection = await getSettingsCollection();
+    const collection = getSettingsCollection();
     const settings = await collection.findOne({ docId: 'main' });
     
     if (!settings) {
@@ -26,10 +26,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ settings: DEFAULT_SETTINGS });
     }
     
-    // Remove MongoDB _id field
+    // Remove database _id field
     const { _id, ...cleanSettings } = settings;
     
-    console.log('[API] ✓ Retrieved settings from MongoDB');
+    console.log('[API] ✓ Retrieved settings from database');
     return NextResponse.json({ settings: cleanSettings });
   } catch (error) {
     return handleApiError(error, 'GET /api/admin/settings');
@@ -63,7 +63,7 @@ export async function PUT(request: NextRequest) {
 
     console.log('[API] Updating settings:', updateData);
 
-    const collection = await getSettingsCollection();
+    const collection = getSettingsCollection();
     
     // Upsert the settings document
     const result = await collection.updateOne(

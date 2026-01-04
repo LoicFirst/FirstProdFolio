@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, handleApiError, logApiRequest } from '@/lib/api-helpers';
-import { getAboutCollection } from '@/lib/storage/mongodb';
+import { getAboutCollection } from '@/lib/storage/database';
 import { AboutDocument } from '@/lib/storage/types';
 
 interface AboutData {
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
     const { error } = await requireAuth(request);
     if (error) return error;
 
-    const collection = await getAboutCollection();
+    const collection = getAboutCollection();
     const aboutDoc = await collection.findOne({ docId: ABOUT_DOC_ID });
     
     // Return the data without the MongoDB _id and docId fields
@@ -65,16 +65,16 @@ export async function POST(request: NextRequest) {
     if (error) return error;
 
     const body = await request.json();
-    console.log('[API] Updating about data in MongoDB');
+    console.log('[API] Updating about data in database');
 
-    const collection = await getAboutCollection();
+    const collection = getAboutCollection();
     await collection.updateOne(
       { docId: ABOUT_DOC_ID },
       { $set: { ...body, docId: ABOUT_DOC_ID } },
       { upsert: true }
     );
 
-    console.log('[API] ✓ About data updated successfully in MongoDB');
+    console.log('[API] ✓ About data updated successfully in database');
     return NextResponse.json({ about: body }, { status: 200 });
   } catch (error) {
     return handleApiError(error, 'POST /api/admin/about');

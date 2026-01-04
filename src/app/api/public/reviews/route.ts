@@ -1,16 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getReviewsCollection, getSettingsCollection } from '@/lib/storage/mongodb';
+import { getReviewsCollection, getSettingsCollection } from '@/lib/storage/database';
 
 /**
  * GET - Get all approved reviews for public display
- * This route reads from MongoDB to show approved client reviews
+ * This route reads from database to show approved client reviews
  */
 export async function GET(request: NextRequest) {
   console.log('[API] GET /api/public/reviews');
   
   try {
     // Check if reviews are enabled
-    const settingsCollection = await getSettingsCollection();
+    const settingsCollection = getSettingsCollection();
     const settings = await settingsCollection.findOne({ docId: 'main' });
     
     if (settings && settings.reviewsEnabled === false) {
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '10', 10);
     const skip = (page - 1) * limit;
     
-    const collection = await getReviewsCollection();
+    const collection = getReviewsCollection();
     
     // Only get approved reviews for public display
     const totalCount = await collection.countDocuments({ status: 'approved' });
@@ -42,10 +42,10 @@ export async function GET(request: NextRequest) {
       .limit(limit)
       .toArray();
     
-    // Remove MongoDB _id field from results
+    // Remove database _id field from results
     const cleanReviews = reviews.map(({ _id, ...review }) => review);
     
-    console.log('[API] ✓ Retrieved', cleanReviews.length, 'approved reviews from MongoDB');
+    console.log('[API] ✓ Retrieved', cleanReviews.length, 'approved reviews from database');
     
     return NextResponse.json(
       { 
@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
       }
     );
   } catch (error) {
-    console.error('[API] Error reading reviews from MongoDB:', error);
+    console.error('[API] Error reading reviews from database:', error);
     
     // Return empty array instead of error - client will use sample reviews
     return NextResponse.json(
@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
   
   try {
     // Check if reviews are enabled
-    const settingsCollection = await getSettingsCollection();
+    const settingsCollection = getSettingsCollection();
     const settings = await settingsCollection.findOne({ docId: 'main' });
     
     if (settings && settings.reviewsEnabled === false) {
@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    const collection = await getReviewsCollection();
+    const collection = getReviewsCollection();
     
     // Generate a unique ID
     const randomSuffix = Math.random().toString(36).substring(2, 9);
