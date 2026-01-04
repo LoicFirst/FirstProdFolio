@@ -17,15 +17,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [email, setEmail] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
 
   // Load token from localStorage on mount
   useEffect(() => {
-    const storedToken = localStorage.getItem('auth_token');
-    const storedEmail = localStorage.getItem('auth_email');
+    setIsMounted(true);
     
-    if (storedToken && storedEmail) {
-      setToken(storedToken);
-      setEmail(storedEmail);
+    if (typeof window !== 'undefined') {
+      const storedToken = localStorage.getItem('auth_token');
+      const storedEmail = localStorage.getItem('auth_email');
+      
+      if (storedToken && storedEmail) {
+        setToken(storedToken);
+        setEmail(storedEmail);
+      }
     }
     
     setIsLoading(false);
@@ -51,8 +56,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // Store token and email
-      localStorage.setItem('auth_token', data.token);
-      localStorage.setItem('auth_email', data.email);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('auth_token', data.token);
+        localStorage.setItem('auth_email', data.email);
+      }
       
       setToken(data.token);
       setEmail(data.email);
@@ -68,12 +75,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('auth_email');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('auth_email');
+    }
     setToken(null);
     setEmail(null);
-    window.location.href = '/admin/login';
+    if (typeof window !== 'undefined') {
+      window.location.href = '/admin/login';
+    }
   };
+
+  // Don't render children until mounted to avoid hydration mismatch
+  if (!isMounted) {
+    return null;
+  }
 
   return (
     <AuthContext.Provider

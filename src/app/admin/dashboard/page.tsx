@@ -11,6 +11,7 @@ import {
   HiArrowRight,
   HiRefresh,
 } from 'react-icons/hi';
+import { authenticatedFetch } from '@/lib/client-api-helpers';
 
 interface Stats {
   videos: number;
@@ -29,8 +30,8 @@ export default function AdminDashboardPage() {
     try {
       setLoading(true);
       const [videosRes, photosRes] = await Promise.all([
-        fetch('/api/admin/videos'),
-        fetch('/api/admin/photos'),
+        authenticatedFetch('/api/admin/videos'),
+        authenticatedFetch('/api/admin/photos'),
       ]);
 
       const videosData = await videosRes.json();

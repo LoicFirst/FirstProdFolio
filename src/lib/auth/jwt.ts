@@ -1,13 +1,18 @@
 import jwt from 'jsonwebtoken';
 import { NextRequest, NextResponse } from 'next/server';
 
-const JWT_SECRET = process.env.JWT_SECRET;
-
-if (!JWT_SECRET) {
-  console.error('[JWT] CRITICAL: JWT_SECRET environment variable is not set');
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error('JWT_SECRET must be set in production');
+function getJWTSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    console.error('[JWT] CRITICAL: JWT_SECRET environment variable is not set');
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('JWT_SECRET must be set in production');
+    }
+    // For development, use a fallback but warn
+    console.warn('[JWT] Using fallback secret for development. DO NOT use in production!');
+    return 'development-secret-change-in-production';
   }
+  return secret;
 }
 
 export interface JWTPayload {
@@ -20,9 +25,7 @@ export interface JWTPayload {
  * Generate a JWT token for authenticated user
  */
 export function generateToken(email: string): string {
-  if (!JWT_SECRET) {
-    throw new Error('JWT_SECRET is not configured');
-  }
+  const JWT_SECRET = getJWTSecret();
   return jwt.sign(
     { email },
     JWT_SECRET,
@@ -34,10 +37,7 @@ export function generateToken(email: string): string {
  * Verify and decode a JWT token
  */
 export function verifyToken(token: string): JWTPayload | null {
-  if (!JWT_SECRET) {
-    console.error('[JWT] JWT_SECRET is not configured');
-    return null;
-  }
+  const JWT_SECRET = getJWTSecret();
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
     return decoded;
