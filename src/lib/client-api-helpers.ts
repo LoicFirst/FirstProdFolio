@@ -24,21 +24,15 @@ export async function authenticatedFetch(
     headers,
   });
   
-  // Handle token expiration
+  // Handle authentication failures (401/403)
+  // Clear session and redirect to login for any authentication error
   if (response.status === 401 || response.status === 403) {
-    try {
-      const data = await response.clone().json();
-      if (data.error && (data.error.includes('expired') || data.error.includes('Invalid'))) {
-        console.warn('[API] Token expired or invalid, clearing session...');
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('auth_email');
-        // Redirect to login
-        if (typeof window !== 'undefined') {
-          window.location.href = '/admin/login';
-        }
-      }
-    } catch (e) {
-      // Ignore JSON parse errors
+    console.warn('[API] Authentication failed (status:', response.status, '), clearing session...');
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('auth_email');
+    // Redirect to login
+    if (typeof window !== 'undefined') {
+      window.location.href = '/admin/login';
     }
   }
   
