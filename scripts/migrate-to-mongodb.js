@@ -17,7 +17,11 @@ const fs = require('fs');
 const path = require('path');
 
 // Load environment variables
+// First try .env.local (for local development), then fall back to .env
 require('dotenv').config({ path: '.env.local' });
+if (!process.env.MONGODB_URI) {
+  require('dotenv').config(); // Falls back to .env
+}
 
 const MONGODB_URI = process.env.MONGODB_URI;
 const DB_NAME = 'portfolio';

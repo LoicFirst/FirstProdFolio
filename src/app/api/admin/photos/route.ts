@@ -3,21 +3,6 @@ import { requireAuth, handleApiError, logApiRequest } from '@/lib/api-helpers';
 import { getPhotosCollection } from '@/lib/storage/mongodb';
 import { PhotoDocument } from '@/lib/storage/types';
 
-interface Photo {
-  id: string;
-  title: string;
-  description: string;
-  year?: number;
-  image_url: string;
-  thumbnail_url?: string;
-  category?: string;
-  location?: string;
-}
-
-interface PhotosData {
-  photos: Photo[];
-}
-
 // GET all photos
 export async function GET(request: NextRequest) {
   logApiRequest('GET', '/api/admin/photos');
@@ -52,9 +37,10 @@ export async function POST(request: NextRequest) {
 
     const collection = await getPhotosCollection();
     
-    // Generate a unique ID
-    const count = await collection.countDocuments();
-    const id = `photo-${String(count + 1).padStart(3, '0')}-${Date.now()}`;
+    // Generate a unique ID using timestamp and random string for better uniqueness
+    // The timestamp ensures chronological ordering, and random suffix prevents collisions
+    const randomSuffix = Math.random().toString(36).substring(2, 9);
+    const id = `photo-${Date.now()}-${randomSuffix}`;
 
     const newPhoto: PhotoDocument = {
       id,

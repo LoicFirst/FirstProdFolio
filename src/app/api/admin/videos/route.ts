@@ -3,21 +3,6 @@ import { requireAuth, handleApiError, logApiRequest } from '@/lib/api-helpers';
 import { getVideosCollection } from '@/lib/storage/mongodb';
 import { VideoDocument } from '@/lib/storage/types';
 
-interface Video {
-  id: string;
-  title: string;
-  description: string;
-  year?: number;
-  video_url: string;
-  thumbnail_url?: string;
-  duration?: string;
-  category?: string;
-}
-
-interface VideosData {
-  videos: Video[];
-}
-
 // GET all videos
 export async function GET(request: NextRequest) {
   logApiRequest('GET', '/api/admin/videos');
@@ -52,9 +37,10 @@ export async function POST(request: NextRequest) {
 
     const collection = await getVideosCollection();
     
-    // Generate a unique ID
-    const count = await collection.countDocuments();
-    const id = `video-${String(count + 1).padStart(3, '0')}-${Date.now()}`;
+    // Generate a unique ID using timestamp and random string for better uniqueness
+    // The timestamp ensures chronological ordering, and random suffix prevents collisions
+    const randomSuffix = Math.random().toString(36).substring(2, 9);
+    const id = `video-${Date.now()}-${randomSuffix}`;
 
     const newVideo: VideoDocument = {
       id,
